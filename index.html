@@ -45,15 +45,15 @@
     /* 상단 안내 바 */
     #hud-bar {
       position: absolute;
-      top: 42px;
+      top: 40px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(12px);
       color: #fff;
       padding: 10px 22px;
       border-radius: 30px;
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -64,6 +64,25 @@
       z-index: 25;
       pointer-events: none;
       transition: all 0.2s ease;
+    }
+
+    /* 중앙 복귀 버튼 */
+    #reset-pos-btn {
+      position: absolute;
+      top: 88px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #cbd5e1;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 16px;
+      z-index: 25;
+      display: none;
+      cursor: pointer;
     }
 
     /* 하단 셔터 및 컨트롤 */
@@ -113,7 +132,7 @@
       transform: scale(0.88);
     }
 
-    /* 베스트 샷 준비 완료 시 셔터 발광 */
+    /* 베스트 구도 시 셔터 발광 */
     #shutter-btn.ready {
       border-color: #22c55e;
       box-shadow: 0 0 25px rgba(34, 197, 94, 0.85);
@@ -121,6 +140,26 @@
     }
     #shutter-btn.ready #shutter-inner {
       background: #22c55e;
+    }
+
+    /* 터치 파동 효과 */
+    .touch-ring {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border: 2px solid #38bdf8;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      opacity: 1;
+      pointer-events: none;
+      z-index: 15;
+      animation: ripple 0.45s ease-out forwards;
+    }
+    @keyframes ripple {
+      to {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+      }
     }
 
     /* 플래시 애니메이션 */
@@ -183,9 +222,11 @@
     <div id="flash-overlay"></div>
 
     <div id="hud-bar">
-      <span id="hud-icon">🎯</span>
-      <span id="hud-text">노란 점을 중앙 원 안으로 넣으세요</span>
+      <span id="hud-icon">👆</span>
+      <span id="hud-text">강조할 피사체를 화면에서 탭하세요</span>
     </div>
+
+    <button id="reset-pos-btn">중앙 구도로 복귀 ↺</button>
 
     <div id="controls">
       <div style="width: 50px;"></div>
@@ -210,6 +251,7 @@
     const hudBar = document.getElementById('hud-bar');
     const hudIcon = document.getElementById('hud-icon');
     const hudText = document.getElementById('hud-text');
+    const resetPosBtn = document.getElementById('reset-pos-btn');
     const shutterBtn = document.getElementById('shutter-btn');
     const flipBtn = document.getElementById('flip-btn');
     const flashOverlay = document.getElementById('flash-overlay');
@@ -222,14 +264,22 @@
     let facingMode = 'environment';
     let capturedBlob = null;
 
-    // 자이로 각도 변수
-    let tiltRoll = 0;   // 좌우 회전 (gamma)
-    let tiltPitch = 0;  // 상하 기울기 (beta)
+    // 자이로 기울기 변수
+    let tiltRoll = 0;
+    let tiltPitch = 0;
     let smoothRoll = 0;
     let smoothPitch = 0;
 
+    // 동적 타깃 링 좌표
+    let currentTargetX = 0;
+    let currentTargetY = 0;
+    let destTargetX = 0;
+    let destTargetY = 0;
+    let isCustomTarget = false;
+
     let isAligned = false;
     let wasAligned = false;
+    let lastTapTime = 0;
 
     // 1. 카메라 시작
     async function setupCamera() {
@@ -245,6 +295,7 @@
         video.onloadedmetadata = () => {
           video.play();
           resizeCanvas();
+          resetToCenter();
           resolve();
         };
       });
@@ -253,54 +304,141 @@
     function resizeCanvas() {
       overlay.width = video.videoWidth || window.innerWidth;
       overlay.height = video.videoHeight || window.innerHeight;
+      if (!isCustomTarget) resetToCenter();
     }
     window.addEventListener('resize', resizeCanvas);
 
-    // 2. 센서 연동 (부드러운 볼 움직임)
+    // 기본 중앙 구도 설정
+    function resetToCenter() {
+      const W = overlay.width;
+      const H = overlay.height;
+      destTargetX = W / 2;
+      destTargetY = H * 0.46; // 시각적 중심점
+      if (currentTargetX === 0) {
+        currentTargetX = destTargetX;
+        currentTargetY = destTargetY;
+      }
+      isCustomTarget = false;
+      resetPosBtn.style.display = 'none';
+      updateHUD('👆', '강조할 피사체를 화면에서 탭하세요', 'rgba(15, 23, 42, 0.88)');
+    }
+
+    resetPosBtn.addEventListener('click', resetToCenter);
+
+    // 2. 센서 연동
     function initSensors() {
       if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', (e) => {
           if (e.gamma !== null && e.beta !== null) {
-            tiltRoll = e.gamma;                // 좌우 롤
-            tiltPitch = e.beta - 70;           // 폰을 대각선/직립으로 들 때의 기본 각도(약 70도) 기준
+            tiltRoll = e.gamma;
+            tiltPitch = e.beta - 70; // 폰의 기본 직립 각도 보정
           }
         });
       }
     }
 
-    // 3. 메인 렌더링 루프
+    // 3. 화면 터치 처리 (황금 구도 포인트 자동 스냅)
+    overlay.addEventListener('pointerdown', (e) => {
+      const now = Date.now();
+      if (now - lastTapTime < 320) {
+        // 더블 탭 시 중앙 구도로 리셋
+        resetToCenter();
+        lastTapTime = 0;
+        return;
+      }
+      lastTapTime = now;
+
+      const rect = overlay.getBoundingClientRect();
+      const scaleX = overlay.width / rect.width;
+      const scaleY = overlay.height / rect.height;
+      const touchX = (e.clientX - rect.left) * scaleX;
+      const touchY = (e.clientY - rect.top) * scaleY;
+
+      showTouchRipple(e.clientX, e.clientY);
+
+      // 터치 지점과 가장 가까운 3분할 황금 비율 포인트 탐색
+      destTargetX = touchX;
+      destTargetY = touchY;
+      applyMagneticGoldenRatio(touchX, touchY);
+
+      isCustomTarget = true;
+      resetPosBtn.style.display = 'block';
+      if (navigator.vibrate) navigator.vibrate(30);
+    });
+
+    // 터치한 위치 근처의 3분할 교차점으로 자석처럼 스냅
+    function applyMagneticGoldenRatio(tx, ty) {
+      const W = overlay.width;
+      const H = overlay.height;
+
+      const goldenPoints = [
+        { x: W / 3, y: H / 3 },         // 좌상단 (인물 상반신/얼굴)
+        { x: (W * 2) / 3, y: H / 3 },   // 우상단 (인물 상반신/얼굴)
+        { x: W / 3, y: (H * 2) / 3 },   // 좌하단 (사물/가구)
+        { x: (W * 2) / 3, y: (H * 2) / 3 }, // 우하단 (사물/가구)
+        { x: W / 2, y: H * 0.46 }       // 정중앙
+      ];
+
+      let closest = goldenPoints[0];
+      let minDist = Infinity;
+      goldenPoints.forEach(pt => {
+        const d = Math.hypot(pt.x - tx, pt.y - ty);
+        if (d < minDist) {
+          minDist = d;
+          closest = pt;
+        }
+      });
+
+      // 터치 위치가 황금 포인트와 일정 거리 이내면 이상적인 구도로 당겨줌 (부드러운 유도)
+      if (minDist < Math.min(W, H) * 0.22) {
+        destTargetX = closest.x;
+        destTargetY = closest.y;
+      }
+    }
+
+    function showTouchRipple(x, y) {
+      const ripple = document.createElement('div');
+      ripple.className = 'touch-ring';
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      document.getElementById('camera-container').appendChild(ripple);
+      setTimeout(() => ripple.remove(), 500);
+    }
+
+    // 4. 메인 렌더링 루프
     function render() {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       const W = overlay.width;
       const H = overlay.height;
 
-      // 은은한 3분할 가이드 격자 (방해되지 않는 얇은 선)
-      drawSimpleGrid(W, H);
+      // (1) 3분할 가이드 격자 라인
+      drawGrid(W, H);
 
-      // 센서 값 선형 보간 (튀지 않고 부드럽게 감속)
+      // (2) 타깃 링 위치 선형 보간 (부드러운 이동 애니메이션)
+      currentTargetX += (destTargetX - currentTargetX) * 0.22;
+      currentTargetY += (destTargetY - currentTargetY) * 0.22;
+
+      // (3) 센서 값 감속 보간
       smoothRoll += (tiltRoll - smoothRoll) * 0.15;
       smoothPitch += (tiltPitch - smoothPitch) * 0.15;
 
-      // 중앙 타깃 링 좌표 (화면 중심에서 약간 위쪽, 사진이 가장 예쁜 45% 지점)
-      const targetX = W / 2;
-      const targetY = H * 0.46;
-      const targetRadius = Math.min(W, H) * 0.085; // 도킹 링 크기
+      const targetRadius = Math.min(W, H) * 0.082;
 
-      // 스마트폰 기울기에 따라 이동하는 '밸런스 볼' 좌표
-      const ballOffsetScale = Math.min(W, H) * 0.015;
-      const ballX = targetX + Math.max(-W * 0.35, Math.min(W * 0.35, smoothRoll * ballOffsetScale));
-      const ballY = targetY + Math.max(-H * 0.3, Math.min(H * 0.3, smoothPitch * ballOffsetScale));
+      // 지정된 타깃 링을 중심으로 반응하는 밸런스 볼 좌표
+      const offsetScale = Math.min(W, H) * 0.015;
+      const ballX = currentTargetX + Math.max(-W * 0.35, Math.min(W * 0.35, smoothRoll * offsetScale));
+      const ballY = currentTargetY + Math.max(-H * 0.3, Math.min(H * 0.3, smoothPitch * offsetScale));
 
-      // 거리 및 수평 검사
-      const dist = Math.hypot(targetX - ballX, targetY - ballY);
-      const isLevel = Math.abs(smoothRoll) < 3.5; // 현실적인 수평 오차 (3.5도)
+      // 도킹 여부 판별
+      const dist = Math.hypot(currentTargetX - ballX, currentTargetY - ballY);
+      const isLevel = Math.abs(smoothRoll) < 3.5;
       isAligned = (dist < targetRadius * 0.65) && isLevel;
 
-      // (1) 중앙 고정 타깃 링 그리기
+      // (4) 타깃 링 렌더링
       ctx.save();
       ctx.beginPath();
-      ctx.arc(targetX, targetY, targetRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = isAligned ? '#22c55e' : 'rgba(255, 255, 255, 0.65)';
+      ctx.arc(currentTargetX, currentTargetY, targetRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = isAligned ? '#22c55e' : 'rgba(255, 255, 255, 0.7)';
       ctx.lineWidth = isAligned ? 4.5 : 2;
       if (!isAligned) ctx.setLineDash([6, 6]);
       ctx.stroke();
@@ -311,7 +449,7 @@
       }
       ctx.restore();
 
-      // (2) 유동 밸런스 볼 그리기
+      // (5) 밸런스 볼 렌더링
       ctx.save();
       ctx.beginPath();
       ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
@@ -320,10 +458,10 @@
       ctx.shadowBlur = 8;
       ctx.fill();
 
-      // 타깃과 볼을 연결하는 미세 유도선
+      // 타깃과 볼 간 유도선
       if (!isAligned) {
         ctx.beginPath();
-        ctx.moveTo(targetX, targetY);
+        ctx.moveTo(currentTargetX, currentTargetY);
         ctx.lineTo(ballX, ballY);
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
         ctx.lineWidth = 1.5;
@@ -331,10 +469,10 @@
       }
       ctx.restore();
 
-      // (3) 상태 텍스트 & 셔터 피드백
+      // (6) HUD 상태 피드백
       if (isAligned) {
         if (!wasAligned) {
-          if (navigator.vibrate) navigator.vibrate(40); // 정렬 성공 시 기분 좋은 햅틱
+          if (navigator.vibrate) navigator.vibrate(40);
           wasAligned = true;
         }
         updateHUD('✨', '베스트 앵글! 지금 셔터를 누르세요', '#22c55e');
@@ -346,14 +484,14 @@
         if (Math.abs(smoothRoll) >= 4.0 && dist < targetRadius * 1.5) {
           updateHUD('📐', '수평을 살짝만 맞춰주세요', '#f59e0b');
         } else {
-          updateHUD('🎯', '노란 점을 중앙 원 안으로 넣으세요', 'rgba(15, 23, 42, 0.85)');
+          updateHUD('🎯', '노란 점을 원 안으로 넣으세요', 'rgba(15, 23, 42, 0.88)');
         }
       }
 
       requestAnimationFrame(render);
     }
 
-    function drawSimpleGrid(W, H) {
+    function drawGrid(W, H) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.lineWidth = 1;
@@ -372,7 +510,7 @@
       hudBar.style.background = bg;
     }
 
-    // 4. 촬영 및 저장
+    // 5. 촬영 및 저장
     function capturePhoto() {
       flashOverlay.classList.remove('flash-anim');
       void flashOverlay.offsetWidth;
@@ -384,7 +522,7 @@
       captureCanvas.height = video.videoHeight;
       const cCtx = captureCanvas.getContext('2d');
 
-      // AI 카메라 색감 보정
+      // AI 카메라 색감 보정 (대비 +8%, 채도 +12%)
       cCtx.filter = 'contrast(1.08) saturate(1.12)';
       cCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
