@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI Smart Camera</title>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
-
+  <title>Smart Composition Camera</title>
   <style>
     * {
       box-sizing: border-box;
@@ -46,140 +42,83 @@
       z-index: 5;
     }
 
-    #hud-container {
+    /* 상단 직관적 안내 HUD */
+    #hud-bar {
       position: absolute;
-      top: 36px;
+      top: 40px;
       left: 50%;
       transform: translateX(-50%);
-      width: 90%;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      z-index: 25;
-      pointer-events: none;
-    }
-    #hud-bar {
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
       color: #fff;
-      padding: 10px 18px;
-      border-radius: 24px;
-      font-size: 13.5px;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 14px;
       font-weight: 700;
       display: flex;
       align-items: center;
       gap: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      white-space: nowrap;
+      z-index: 25;
+      pointer-events: none;
       transition: all 0.25s ease;
     }
-    #env-warning-bar {
-      background: rgba(220, 38, 38, 0.92);
-      backdrop-filter: blur(8px);
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 16px;
-      font-size: 12.5px;
-      font-weight: 700;
-      display: none;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-align: center;
-    }
 
-    #reset-btn {
+    /* 포커스 해제 버튼 */
+    #reset-focus-btn {
       position: absolute;
-      top: 38px;
-      right: 16px;
-      background: rgba(239, 68, 68, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 8px 14px;
-      border-radius: 20px;
-      z-index: 30;
-      display: none;
-      cursor: pointer;
-    }
-
-    #mode-selector {
-      position: absolute;
-      bottom: 122px;
+      top: 92px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 24px;
-      padding: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 14px;
       z-index: 25;
-      gap: 4px;
-    }
-    .mode-tab {
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #94a3b8;
-      border: none;
-      background: transparent;
+      display: none;
       cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .mode-tab.active {
-      background: #3b82f6;
-      color: #fff;
-      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.5);
     }
 
+    /* 하단 심플 컨트롤 바 */
     #controls {
       position: absolute;
-      bottom: 30px;
+      bottom: 35px;
       width: 100%;
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 20;
-      padding: 0 25px;
+      padding: 0 40px;
     }
-    .btn-circle {
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border: 1.5px solid rgba(255, 255, 255, 0.35);
+    .sub-btn {
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      color: white;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       cursor: pointer;
     }
-    .btn-sub {
-      width: 52px;
-      height: 52px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .btn-sub.active {
-      background: #22c55e;
-      border-color: #4ade80;
-    }
     #shutter-btn {
-      width: 76px;
-      height: 76px;
+      width: 78px;
+      height: 78px;
       border-radius: 50%;
       border: 4px solid #ffffff;
       background: transparent;
       padding: 4px;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
     #shutter-inner {
       width: 100%;
@@ -191,7 +130,31 @@
     #shutter-btn:active #shutter-inner {
       transform: scale(0.88);
     }
+    /* 완벽 구도 시 셔터 버튼 강조 */
+    #shutter-btn.perfect-ready {
+      border-color: #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+    }
+    #shutter-btn.perfect-ready #shutter-inner {
+      background: #22c55e;
+    }
 
+    /* 플래시 효과 */
+    #flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 80;
+    }
+    .flash-anim { animation: flash 0.25s ease-out; }
+    @keyframes flash {
+      0% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    /* 결과 미리보기 모달 */
     #preview-modal {
       display: none;
       position: fixed;
@@ -205,19 +168,19 @@
     }
     #preview-img {
       max-width: 100%;
-      max-height: 72vh;
+      max-height: 75vh;
       border-radius: 16px;
       object-fit: contain;
     }
     .modal-actions {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       width: 100%;
       max-width: 360px;
     }
     .action-btn {
       flex: 1;
-      padding: 15px;
+      padding: 16px;
       border-radius: 14px;
       font-size: 15px;
       font-weight: 700;
@@ -226,20 +189,6 @@
     }
     #btn-retake { background: #27272a; color: #fff; }
     #btn-save { background: #22c55e; color: #fff; }
-
-    #flash-overlay {
-      position: absolute;
-      inset: 0;
-      background: white;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 80;
-    }
-    .flash-anim { animation: flash 0.3s ease-out; }
-    @keyframes flash {
-      0% { opacity: 0.9; }
-      100% { opacity: 0; }
-    }
   </style>
 </head>
 <body>
@@ -249,36 +198,24 @@
     <canvas id="overlay"></canvas>
     <div id="flash-overlay"></div>
 
-    <div id="hud-container">
-      <div id="hud-bar">
-        <span id="hud-icon">✏️</span>
-        <span id="hud-text">촬영할 사물 주변을 올가미로 그리거나 탭하세요</span>
-      </div>
-      <div id="env-warning-bar">⚠️ 배경이 너무 산만합니다. 정돈된 각도를 찾아보세요</div>
+    <!-- 가이드 안내 HUD -->
+    <div id="hud-bar">
+      <span id="hud-icon">📐</span>
+      <span id="hud-text">스마트폰 수평을 맞추세요</span>
     </div>
+    <button id="reset-focus-btn">포커스 해제 ✕</button>
 
-    <button id="reset-btn">대상 변경 ✕</button>
-
-    <div id="mode-selector">
-      <button class="mode-tab active" id="tab-object">
-        <span>✏️</span> 1. 사물 선택
-      </button>
-      <button class="mode-tab" id="tab-person">
-        <span>👤</span> 2. 인물 선택
-      </button>
-    </div>
-
+    <!-- 하단 컨트롤 (자동 촬영 버튼 제거됨) -->
     <div id="controls">
-      <button class="btn-circle btn-sub" id="auto-btn">
-        <span id="auto-text">AUTO<br>OFF</span>
-      </button>
+      <div style="width: 50px;"></div> <!-- 좌우 대칭용 여백 -->
       <div id="shutter-btn"><div id="shutter-inner"></div></div>
-      <button class="btn-circle btn-sub" id="flip-btn">전환</button>
+      <button class="sub-btn" id="flip-btn">전환</button>
     </div>
   </div>
 
+  <!-- 결과 미리보기 모달 -->
   <div id="preview-modal">
-    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ AI 구도 촬영 완료</div>
+    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ 베스트 샷 구도 촬영 완료</div>
     <img id="preview-img" alt="촬영된 사진">
     <div class="modal-actions">
       <button class="action-btn" id="btn-retake">다시 찍기</button>
@@ -293,11 +230,7 @@
     const hudBar = document.getElementById('hud-bar');
     const hudIcon = document.getElementById('hud-icon');
     const hudText = document.getElementById('hud-text');
-    const envWarningBar = document.getElementById('env-warning-bar');
-    const resetBtn = document.getElementById('reset-btn');
-    const tabObject = document.getElementById('tab-object');
-    const tabPerson = document.getElementById('tab-person');
-    const autoBtn = document.getElementById('auto-btn');
+    const resetFocusBtn = document.getElementById('reset-focus-btn');
     const shutterBtn = document.getElementById('shutter-btn');
     const flipBtn = document.getElementById('flip-btn');
     const flashOverlay = document.getElementById('flash-overlay');
@@ -306,38 +239,21 @@
     const btnRetake = document.getElementById('btn-retake');
     const btnSave = document.getElementById('btn-save');
 
-    let currentMode = 'OBJECT';
-    let isAutoShoot = false;
-    let facingMode = 'environment';
     let currentStream = null;
+    let facingMode = 'environment';
     let capturedBlob = null;
-    let lockTimer = null;
-    let isLocked = false;
 
-    let isEnvironmentBad = false;
+    // 수평 센서 상태
+    let tiltAngle = 0;       // 좌우 롤링 각도
+    let isLevel = false;     // 수평 일치 여부 (오차 1.8도 이내)
 
-    // 사물 트래커 변수
-    let isDrawingLasso = false;
-    let lassoPoints = [];
-    let selectedObjectBox = null;
-    let objectTemplate = null;
-    const trackerCanvas = document.createElement('canvas');
-    const trackerCtx = trackerCanvas.getContext('2d', { willReadFrequently: true });
-    trackerCanvas.width = 160;
-    trackerCanvas.height = 120;
+    // 피사체 및 샷 서제스천 타깃 좌표
+    let hasTargetLock = false;
+    let subjectDot = null;   // 사용자가 터치한 피사체 점
+    let targetSpot = null;   // 최적의 3분할 교차점
+    let lastBeta = null, lastGamma = null;
 
-    // 인물 변수
-    let faceDetector = null;
-    let detectedPeople = [];
-    let selectedPerson = null;
-    let isDetectingFaces = false;
-
-    // 환경 진단용 캔버스
-    const diagCanvas = document.createElement('canvas');
-    const diagCtx = diagCanvas.getContext('2d', { willReadFrequently: true });
-    diagCanvas.width = 120;
-    diagCanvas.height = 90;
-
+    // 1. 카메라 스트림 연결
     async function setupCamera() {
       if (currentStream) currentStream.getTracks().forEach(t => t.stop());
       const constraints = {
@@ -362,496 +278,249 @@
     }
     window.addEventListener('resize', resizeCanvas);
 
-    function initFaceDetector() {
-      try {
-        faceDetector = new FaceDetection({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
-        });
-        faceDetector.setOptions({ model: 'short', minDetectionConfidence: 0.55 });
-        faceDetector.onResults(onFaceResults);
-      } catch (e) {
-        console.warn('FaceDetector 초기화 실패:', e);
-      }
-    }
+    // 2. 디지털 수평 센서 연동 (DeviceOrientation)
+    function initSensors() {
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', (e) => {
+          if (e.gamma !== null && e.beta !== null) {
+            // 세로 모드 기준 좌우 기울기
+            tiltAngle = e.gamma;
+            isLevel = Math.abs(tiltAngle) < 1.8;
 
-    tabObject.addEventListener('click', () => {
-      currentMode = 'OBJECT';
-      tabObject.classList.add('active');
-      tabPerson.classList.remove('active');
-      resetSelection();
-      updateHUD('✏️', '촬영할 사물 주변을 올가미로 그리거나 탭하세요', 'rgba(15, 23, 42, 0.88)');
-    });
-
-    tabPerson.addEventListener('click', () => {
-      currentMode = 'PERSON';
-      tabPerson.classList.add('active');
-      tabObject.classList.remove('active');
-      resetSelection();
-      updateHUD('👤', '화면에 인물을 비추고 주인공을 탭하세요', '#3b82f6');
-    });
-
-    resetBtn.addEventListener('click', resetSelection);
-
-    function resetSelection() {
-      selectedObjectBox = null;
-      objectTemplate = null;
-      lassoPoints = [];
-      selectedPerson = null;
-      isLocked = false;
-      clearTimeout(lockTimer);
-      resetBtn.style.display = 'none';
-
-      if (currentMode === 'OBJECT') {
-        updateHUD('✏️', '촬영할 사물 주변을 올가미로 그리거나 탭하세요', 'rgba(15, 23, 42, 0.88)');
-      } else {
-        updateHUD('👤', '화면에 인물을 비추고 주인공을 탭하세요', '#3b82f6');
-      }
-    }
-
-    // 터치 입력 처리
-    overlay.addEventListener('pointerdown', (e) => {
-      const pos = getEventPos(e);
-
-      if (currentMode === 'PERSON') {
-        handlePersonSelection(pos.x, pos.y);
-      } else {
-        isDrawingLasso = true;
-        lassoPoints = [pos];
-        selectedObjectBox = null;
-        objectTemplate = null;
-      }
-    });
-
-    overlay.addEventListener('pointermove', (e) => {
-      if (currentMode === 'OBJECT' && isDrawingLasso) {
-        lassoPoints.push(getEventPos(e));
-      }
-    });
-
-    overlay.addEventListener('pointerup', () => {
-      if (currentMode === 'OBJECT' && isDrawingLasso) {
-        isDrawingLasso = false;
-        const W = overlay.width, H = overlay.height;
-
-        if (lassoPoints.length < 6) {
-          const p = lassoPoints[0];
-          const bSize = Math.min(W, H) * 0.22;
-          selectedObjectBox = {
-            x: Math.max(10, p.x - bSize / 2),
-            y: Math.max(10, p.y - bSize / 2),
-            w: bSize,
-            h: bSize
-          };
-        } else {
-          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-          lassoPoints.forEach(pt => {
-            if (pt.x < minX) minX = pt.x;
-            if (pt.x > maxX) maxX = pt.x;
-            if (pt.y < minY) minY = pt.y;
-            if (pt.y > maxY) maxY = pt.y;
-          });
-          selectedObjectBox = {
-            x: minX,
-            y: minY,
-            w: Math.max(40, maxX - minX),
-            h: Math.max(40, maxY - minY)
-          };
-        }
-
-        // 사물 특징 패치 추출 (트래킹용)
-        initObjectTracker();
-        resetBtn.style.display = 'block';
-        updateHUD('🎯', '사물이 선택되었습니다. 원에 맞춰보세요', '#38bdf8');
-        if (navigator.vibrate) navigator.vibrate(40);
-      }
-    });
-
-    function getEventPos(e) {
-      const rect = overlay.getBoundingClientRect();
-      return {
-        x: (e.clientX - rect.left) * (overlay.width / rect.width),
-        y: (e.clientY - rect.top) * (overlay.height / rect.height)
-      };
-    }
-
-    // 사물 패치 템플릿 생성 (16x16 명암 특징)
-    function initObjectTracker() {
-      if (!selectedObjectBox) return;
-      const cx = selectedObjectBox.x + selectedObjectBox.w / 2;
-      const cy = selectedObjectBox.y + selectedObjectBox.h / 2;
-
-      trackerCtx.drawImage(video, cx - 30, cy - 30, 60, 60, 0, 0, 16, 16);
-      const img = trackerCtx.getImageData(0, 0, 16, 16).data;
-      objectTemplate = new Float32Array(16 * 16);
-      for (let i = 0; i < img.length; i += 4) {
-        objectTemplate[i / 4] = 0.299 * img[i] + 0.587 * img[i+1] + 0.114 * img[i+2];
-      }
-    }
-
-    // 카메라 이동 시 사물 추적 갱신
-    function updateObjectTracking() {
-      if (!selectedObjectBox || !objectTemplate) return;
-      const cx = selectedObjectBox.x + selectedObjectBox.w / 2;
-      const cy = selectedObjectBox.y + selectedObjectBox.h / 2;
-
-      const searchW = 120;
-      trackerCtx.drawImage(video, cx - searchW / 2, cy - searchW / 2, searchW, searchW, 0, 0, 48, 48);
-      const searchData = trackerCtx.getImageData(0, 0, 48, 48).data;
-
-      let minDiff = Infinity, bestDx = 0, bestDy = 0;
-      for (let sy = 0; sy <= 32; sy += 2) {
-        for (let sx = 0; sx <= 32; sx += 2) {
-          let diff = 0;
-          for (let py = 0; py < 16; py += 2) {
-            for (let px = 0; px < 16; px += 2) {
-              const idx = ((sy + py) * 48 + (sx + px)) * 4;
-              const gray = 0.299 * searchData[idx] + 0.587 * searchData[idx+1] + 0.114 * searchData[idx+2];
-              diff += Math.abs(gray - objectTemplate[py * 16 + px]);
+            // 카메라 움직임에 따라 피사체 점의 상대 좌표 보정 (물체 위치 유지)
+            if (hasTargetLock && subjectDot && lastBeta !== null && lastGamma !== null) {
+              const deltaX = (e.gamma - lastGamma) * 14;
+              const deltaY = (e.beta - lastBeta) * 14;
+              subjectDot.x -= deltaX;
+              subjectDot.y -= deltaY;
             }
+            lastBeta = e.beta;
+            lastGamma = e.gamma;
           }
-          if (diff < minDiff) {
-            minDiff = diff;
-            bestDx = (sx - 16) * (searchW / 48);
-            bestDy = (sy - 16) * (searchW / 48);
-          }
-        }
-      }
-
-      if (minDiff < 3800) {
-        selectedObjectBox.x += bestDx * 0.45;
-        selectedObjectBox.y += bestDy * 0.45;
-      }
-    }
-
-    // 인물 터치 선택 (실제 얼굴 감지 영역만 인정)
-    function handlePersonSelection(touchX, touchY) {
-      if (detectedPeople.length === 0) {
-        updateHUD('⚠️', '인물이 감지되지 않았습니다. 사람을 비춰주세요', '#ef4444');
-        return;
-      }
-
-      let closest = null, minDist = Infinity;
-      detectedPeople.forEach(p => {
-        const cx = p.box.x + p.box.w / 2;
-        const cy = p.box.y + p.box.h * 0.9;
-        const d = Math.hypot(cx - touchX, cy - touchY);
-        if (d < minDist) {
-          minDist = d;
-          closest = p;
-        }
-      });
-
-      if (closest && minDist < Math.max(closest.box.w * 1.8, 140)) {
-        selectedPerson = { ...closest };
-        resetBtn.style.display = 'block';
-        updateHUD('⭐', '주인공이 지정되었습니다! 눈높이를 맞추세요', '#a855f7');
-        if (navigator.vibrate) navigator.vibrate(50);
-      } else {
-        updateHUD('⚠️', '인물의 얼굴이나 상반신을 정확히 터치하세요', '#ef4444');
-      }
-    }
-
-    // 환경 복잡도 진단
-    function analyzeEnvironment() {
-      diagCtx.drawImage(video, 0, 0, 120, 90);
-      const data = diagCtx.getImageData(0, 0, 120, 90).data;
-      let edges = 0;
-
-      for (let y = 1; y < 89; y += 2) {
-        for (let x = 1; x < 119; x += 2) {
-          const idx = (y * 120 + x) * 4;
-          const gray = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
-          const right = 0.299 * data[idx+4] + 0.587 * data[idx+5] + 0.114 * data[idx+6];
-          const down = 0.299 * data[idx+480] + 0.587 * data[idx+481] + 0.114 * data[idx+482];
-          if (Math.abs(gray - right) + Math.abs(gray - down) > 48) edges++;
-        }
-      }
-
-      // 복잡한 방(옷걸이/책장 난립) 감지 기준
-      if (edges > 620) {
-        isEnvironmentBad = true;
-        envWarningBar.innerText = '⚠️ 배경에 물건이 너무 많아 산만합니다. 깔끔한 곳을 비춰보세요';
-        envWarningBar.style.display = 'block';
-      } else {
-        isEnvironmentBad = false;
-        envWarningBar.style.display = 'none';
-      }
-    }
-
-    let loopFrame = 0;
-    async function renderLoop() {
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
-      drawGrid();
-
-      if (++loopFrame % 10 === 0) analyzeEnvironment();
-
-      if (currentMode === 'OBJECT') {
-        renderObjectMode();
-      } else {
-        await renderPersonMode();
-      }
-
-      requestAnimationFrame(renderLoop);
-    }
-
-    function renderObjectMode() {
-      if (isDrawingLasso && lassoPoints.length > 1) {
-        ctx.save();
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
-        ctx.beginPath();
-        ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
-        for (let i = 1; i < lassoPoints.length; i++) ctx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      if (selectedObjectBox) {
-        updateObjectTracking();
-        drawBox(selectedObjectBox, '#38bdf8', '선택된 사물');
-        guideToRuleOfThirds(selectedObjectBox);
-      }
-    }
-
-    async function renderPersonMode() {
-      if (faceDetector && !isDetectingFaces && video.readyState === video.HAVE_ENOUGH_DATA) {
-        isDetectingFaces = true;
-        await faceDetector.send({ image: video });
-        isDetectingFaces = false;
-      }
-
-      if (!selectedPerson) {
-        if (detectedPeople.length === 0) {
-          updateHUD('👤', '화면에 인물을 비춰주세요', '#3b82f6');
-        } else {
-          updateHUD('👆', `${detectedPeople.length}명의 인물 감지됨! 촬영할 인물을 탭하세요`, '#facc15');
-          detectedPeople.forEach((p, idx) => drawCandidatePerson(p.box, `인물 ${idx + 1}`));
-        }
-      } else {
-        updateSelectedPersonTrack();
-        drawHeroPerson(selectedPerson.box);
-        guidePortraitComposition(selectedPerson.box);
-      }
-    }
-
-    function onFaceResults(results) {
-      if (currentMode !== 'PERSON') return;
-      const W = overlay.width, H = overlay.height;
-      detectedPeople = [];
-
-      if (results.detections && results.detections.length > 0) {
-        results.detections.forEach((det, idx) => {
-          const bb = det.boundingBox;
-          const box = {
-            x: bb.xCenter * W - (bb.width * W) / 2,
-            y: bb.yCenter * H - (bb.height * H) / 2,
-            w: bb.width * W,
-            h: bb.height * H
-          };
-          let eyeY = box.y + box.h * 0.35;
-          if (det.landmarks && det.landmarks.length >= 2) {
-            eyeY = ((det.landmarks[0].y + det.landmarks[1].y) / 2) * H;
-          }
-          detectedPeople.push({ id: `p_${idx}`, box, eyeY });
         });
       }
     }
 
-    function updateSelectedPersonTrack() {
-      if (!selectedPerson || detectedPeople.length === 0) return;
-      let closest = null, minDist = Infinity;
-      const prevCx = selectedPerson.box.x + selectedPerson.box.w / 2;
-      const prevCy = selectedPerson.box.y + selectedPerson.box.h / 2;
+    // 3. 뷰파인더 터치 (피사체 포커싱 & 황금 구도 생성)
+    overlay.addEventListener('pointerdown', (e) => {
+      const rect = overlay.getBoundingClientRect();
+      const scaleX = overlay.width / rect.width;
+      const scaleY = overlay.height / rect.height;
+      const touchX = (e.clientX - rect.left) * scaleX;
+      const touchY = (e.clientY - rect.top) * scaleY;
 
-      detectedPeople.forEach(p => {
-        const d = Math.hypot(p.box.x + p.box.w / 2 - prevCx, p.box.y + p.box.h / 2 - prevCy);
-        if (d < minDist) { minDist = d; closest = p; }
-      });
+      // 터치한 위치에 피사체 점 지정
+      subjectDot = { x: touchX, y: touchY };
+      hasTargetLock = true;
+      resetFocusBtn.style.display = 'block';
 
-      if (closest && minDist < 180) {
-        selectedPerson.box.x += (closest.box.x - selectedPerson.box.x) * 0.45;
-        selectedPerson.box.y += (closest.box.y - selectedPerson.box.y) * 0.45;
-        selectedPerson.box.w += (closest.box.w - selectedPerson.box.w) * 0.45;
-        selectedPerson.box.h += (closest.box.h - selectedPerson.box.h) * 0.45;
-        selectedPerson.eyeY = closest.eyeY;
-      }
-    }
+      // 4대 3분할 교차점 중 가장 이상적인 타깃 지점 계산
+      calculateOptimalSweetSpot(touchX, touchY);
 
-    function drawCandidatePerson(box, label) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 6]);
-      ctx.strokeRect(box.x, box.y, box.w, box.h * 1.8);
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      ctx.fillRect(box.x, box.y - 24, 96, 22);
-      ctx.fillStyle = '#facc15';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(`👆 탭: ${label}`, box.x + 8, box.y - 8);
-      ctx.restore();
-    }
+      if (navigator.vibrate) navigator.vibrate(35);
+    });
 
-    function drawHeroPerson(box) {
-      ctx.save();
-      ctx.strokeStyle = '#a855f7';
-      ctx.lineWidth = 3.5;
-      ctx.strokeRect(box.x, box.y, box.w, box.h * 2.2);
-      ctx.fillStyle = '#a855f7';
-      ctx.fillRect(box.x, box.y - 26, 92, 24);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('⭐ 주인공 선택됨', box.x + 8, box.y - 9);
-      ctx.restore();
-    }
+    resetFocusBtn.addEventListener('click', () => {
+      hasTargetLock = false;
+      subjectDot = null;
+      targetSpot = null;
+      resetFocusBtn.style.display = 'none';
+      shutterBtn.classList.remove('perfect-ready');
+    });
 
-    function guidePortraitComposition(box) {
-      const H = overlay.height, W = overlay.width;
-      const targetEyeLevel = H / 3;
-      const curEyeY = box.eyeY || (box.y + box.h * 0.35);
-
-      if (isEnvironmentBad) {
-        updateHUD('⚠️', '배경이 너무 복잡합니다. 깔끔한 벽 쪽으로 이동하세요', '#ef4444');
-        isLocked = false;
-        return;
-      }
-
-      if (box.h * 2.2 < H * 0.2) {
-        updateHUD('🔍', '인물이 너무 작습니다. 한 걸음 더 다가가세요', '#f97316');
-        isLocked = false;
-        return;
-      }
-
-      const diffY = targetEyeLevel - curEyeY;
-      const isAligned = Math.abs(diffY) < H * 0.06;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(0, targetEyeLevel); ctx.lineTo(W, targetEyeLevel);
-      ctx.strokeStyle = isAligned ? '#22c55e' : '#facc15';
-      ctx.lineWidth = isAligned ? 3.5 : 1.5;
-      ctx.stroke();
-      ctx.restore();
-
-      if (isAligned) {
-        updateHUD('✨', isAutoShoot ? '완벽한 인물 구도! 촬영 중...' : '완벽한 인물 구도! 지금 셔터를 누르세요', '#22c55e');
-        if (!isLocked) {
-          isLocked = true;
-          if (navigator.vibrate) navigator.vibrate(50);
-          if (isAutoShoot) {
-            clearTimeout(lockTimer);
-            lockTimer = setTimeout(capturePhoto, 800);
-          }
-        }
-      } else {
-        isLocked = false;
-        clearTimeout(lockTimer);
-        updateHUD(diffY > 0 ? '⬇' : '⬆', `카메라를 ${diffY > 0 ? '아래로' : '위로'} 움직여 눈높이를 맞추세요`, '#0284c7');
-      }
-    }
-
-    function guideToRuleOfThirds(box) {
-      const W = overlay.width, H = overlay.height;
-      const center = { x: box.x + box.w / 2, y: box.y + box.h / 2 };
-
-      if (isEnvironmentBad) {
-        updateHUD('⚠️', '배경에 물건이 너무 많습니다. 정돈된 각도를 찾아보세요', '#ef4444');
-        isLocked = false;
-        return;
-      }
-
-      const targets = [
-        { x: W / 3, y: H / 3 }, { x: (W * 2) / 3, y: H / 3 },
-        { x: W / 3, y: (H * 2) / 3 }, { x: (W * 2) / 3, y: (H * 2) / 3 }
+    function calculateOptimalSweetSpot(touchX, touchY) {
+      const W = overlay.width;
+      const H = overlay.height;
+      const intersectionPoints = [
+        { x: W / 3, y: H / 3 },
+        { x: (W * 2) / 3, y: H / 3 },
+        { x: W / 3, y: (H * 2) / 3 },
+        { x: (W * 2) / 3, y: (H * 2) / 3 }
       ];
 
-      let targetPt = targets[0], minDist = Infinity;
-      targets.forEach(pt => {
-        const d = Math.hypot(pt.x - center.x, pt.y - center.y);
-        if (d < minDist) { minDist = d; targetPt = pt; }
+      // 터치한 위치에서 가장 가까운 3분할 포인트 선정
+      let closest = intersectionPoints[0];
+      let minDist = Infinity;
+      intersectionPoints.forEach(pt => {
+        const d = Math.hypot(pt.x - touchX, pt.y - touchY);
+        if (d < minDist) {
+          minDist = d;
+          closest = pt;
+        }
       });
+      targetSpot = closest;
+    }
 
-      const alignThreshold = Math.min(W, H) * 0.085;
-      const isAligned = minDist <= alignThreshold;
+    // 4. 메인 렌더링 루프
+    function render() {
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      const W = overlay.width;
+      const H = overlay.height;
+
+      // (1) 3분할 그리드 라인 렌더링
+      drawRuleOfThirdsGrid(W, H);
+
+      // (2) 화면 중앙 수평계 가이드 라인 렌더링
+      drawHorizonLevel(W, H);
+
+      // (3) 구도 타깃 일치 및 화살표 가이드 판별
+      evaluateComposition(W, H);
+
+      requestAnimationFrame(render);
+    }
+
+    // 3분할 격자
+    function drawRuleOfThirdsGrid(W, H) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H);
+      ctx.moveTo((W * 2) / 3, 0); ctx.lineTo((W * 2) / 3, H);
+      ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3);
+      ctx.moveTo(0, (H * 2) / 3); ctx.lineTo(W, (H * 2) / 3);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 중앙 수평선 (오차 1.8도 이내면 초록색)
+    function drawHorizonLevel(W, H) {
+      const cy = H / 2;
+      const len = W * 0.18;
+      const rad = (tiltAngle * Math.PI) / 180;
 
       ctx.save();
+      ctx.translate(W / 2, cy);
+      ctx.rotate(-rad);
+
       ctx.beginPath();
-      ctx.arc(targetPt.x, targetPt.y, alignThreshold, 0, Math.PI * 2);
+      ctx.moveTo(-len, 0);
+      ctx.lineTo(len, 0);
+      ctx.strokeStyle = isLevel ? '#22c55e' : 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = isLevel ? 3 : 1.5;
+      ctx.stroke();
 
-      if (isAligned) {
-        ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 4; ctx.stroke();
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.25)'; ctx.fill();
-        updateHUD('✨', isAutoShoot ? '완벽한 구도! 자동 촬영 중...' : '완벽한 구도! 셔터를 누르세요', '#22c55e');
+      // 중앙 십자 기준점
+      ctx.beginPath();
+      ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fillStyle = isLevel ? '#22c55e' : '#ffffff';
+      ctx.fill();
+      ctx.restore();
+    }
 
-        if (!isLocked) {
-          isLocked = true;
-          if (navigator.vibrate) navigator.vibrate(50);
-          if (isAutoShoot) {
-            clearTimeout(lockTimer);
-            lockTimer = setTimeout(capturePhoto, 800);
-          }
+    // 구도 상태 분석 및 UI 피드백
+    function evaluateComposition(W, H) {
+      // 1. 유저가 피사체를 지정하지 않은 초기 상태
+      if (!hasTargetLock || !subjectDot) {
+        if (!isLevel) {
+          updateHUD('📐', '스마트폰을 똑바로 세워 수평을 맞추세요', '#f59e0b');
+        } else {
+          updateHUD('👆', '강조할 인물이나 사물을 화면에서 터치하세요', '#3b82f6');
         }
-      } else {
-        isLocked = false;
-        clearTimeout(lockTimer);
-        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.stroke();
-        drawArrow(center, targetPt);
+        shutterBtn.classList.remove('perfect-ready');
+        return;
+      }
 
-        const dx = targetPt.x - center.x, dy = targetPt.y - center.y;
-        generateDirectionInstruction(dx, dy);
+      // 2. 피사체가 지정된 상태: 점(피사체)을 원(타깃) 안으로 유도
+      const dist = Math.hypot(targetSpot.x - subjectDot.x, targetSpot.y - subjectDot.y);
+      const hitRadius = Math.min(W, H) * 0.08; // 도킹 허용 반경
+      const isTargetMatched = dist <= hitRadius;
+
+      // 타깃 원 렌더링
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(targetSpot.x, targetSpot.y, hitRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = isTargetMatched ? '#22c55e' : '#facc15';
+      ctx.lineWidth = isTargetMatched ? 4 : 2;
+      ctx.setLineDash(isTargetMatched ? [] : [6, 6]);
+      ctx.stroke();
+
+      if (isTargetMatched) {
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.2)';
+        ctx.fill();
       }
       ctx.restore();
+
+      // 피사체 점 렌더링
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(subjectDot.x, subjectDot.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = isTargetMatched ? '#22c55e' : '#ffd700';
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.restore();
+
+      // 판정: [수평 일치] + [타깃 일치] 모두 완료된 상태
+      if (isLevel && isTargetMatched) {
+        updateHUD('✨', '완벽한 구도! 지금 셔터를 누르세요', '#22c55e');
+        shutterBtn.classList.add('perfect-ready');
+      } 
+      // 위치는 맞았으나 수평이 틀린 경우
+      else if (isTargetMatched && !isLevel) {
+        updateHUD('📐', '구도 일치! 이제 수평만 살짝 맞춰주세요', '#f59e0b');
+        shutterBtn.classList.remove('perfect-ready');
+      } 
+      // 타깃 위치로 이동해야 하는 경우
+      else {
+        shutterBtn.classList.remove('perfect-ready');
+        drawDirectionArrow(subjectDot, targetSpot);
+
+        const dx = targetSpot.x - subjectDot.x;
+        const dy = targetSpot.y - subjectDot.y;
+        let h = Math.abs(dx) > 25 ? (dx > 0 ? '오른쪽' : '왼쪽') : '';
+        let v = Math.abs(dy) > 25 ? (dy > 0 ? '아래' : '위') : '';
+        let arrow = (dx > 0 && dy > 0) ? '↘' : (dx > 0 && dy < 0) ? '↗' : (dx < 0 && dy > 0) ? '↙' : '↖';
+
+        if (h && v) updateHUD(arrow, `카메라를 ${h} ${v}로 이동하세요`, '#0284c7');
+        else if (h) updateHUD(dx > 0 ? '➔' : '⬅', `카메라를 ${h}으로 이동하세요`, '#0284c7');
+        else if (v) updateHUD(dy > 0 ? '⬇' : '⬆', `카메라를 ${v}로 이동하세요`, '#0284c7');
+        else updateHUD('🎯', '원을 향해 조금만 더 이동하세요', '#0284c7');
+      }
     }
 
-    function generateDirectionInstruction(dx, dy) {
-      let h = Math.abs(dx) > 30 ? (dx > 0 ? '오른쪽' : '왼쪽') : '';
-      let v = Math.abs(dy) > 30 ? (dy > 0 ? '아래' : '위') : '';
-      let arrow = (dx > 0 && dy > 0) ? '↘' : (dx > 0 && dy < 0) ? '↗' : (dx < 0 && dy > 0) ? '↙' : '↖';
-      if (h && v) updateHUD(arrow, `카메라를 ${h} ${v}로 이동하세요`, '#0284c7');
-      else if (h) updateHUD(dx > 0 ? '➔' : '⬅', `카메라를 ${h}으로 이동하세요`, '#0284c7');
-      else if (v) updateHUD(dy > 0 ? '⬇' : '⬆', `카메라를 ${v}로 이동하세요`, '#0284c7');
-      else updateHUD('🎯', '조금만 더 원 중심에 맞춰보세요', '#0284c7');
-    }
+    // 유도 화살표
+    function drawDirectionArrow(from, to) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
 
-    function drawArrow(from, to) {
-      ctx.save(); ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
-      const angle = Math.atan2(to.y - from.y, to.x - from.x), len = 14;
-      ctx.beginPath(); ctx.moveTo(to.x, to.y);
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const len = 12;
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y);
       ctx.lineTo(to.x - len * Math.cos(angle - Math.PI / 6), to.y - len * Math.sin(angle - Math.PI / 6));
       ctx.lineTo(to.x - len * Math.cos(angle + Math.PI / 6), to.y - len * Math.sin(angle + Math.PI / 6));
-      ctx.fillStyle = '#38bdf8'; ctx.fill(); ctx.restore();
-    }
-
-    function drawBox(box, color, label) {
-      ctx.save();
-      ctx.strokeStyle = color; ctx.lineWidth = 3;
-      ctx.strokeRect(box.x, box.y, box.w, box.h);
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-      ctx.fillRect(box.x, Math.max(0, box.y - 24), ctx.measureText(label).width + 16, 22);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif';
-      ctx.fillText(label, box.x + 8, Math.max(16, box.y - 8));
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
       ctx.restore();
-    }
-
-    function drawGrid() {
-      const W = overlay.width, H = overlay.height;
-      ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)'; ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H); ctx.moveTo((W * 2) / 3, 0); ctx.lineTo((W * 2) / 3, H);
-      ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3); ctx.moveTo(0, (H * 2) / 3); ctx.lineTo(W, (H * 2) / 3);
-      ctx.stroke(); ctx.restore();
     }
 
     function updateHUD(icon, text, bg) {
-      hudIcon.innerText = icon; hudText.innerText = text;
-      if (bg) hudBar.style.background = bg;
+      hudIcon.innerText = icon;
+      hudText.innerText = text;
+      hudBar.style.background = bg;
     }
 
+    // 5. 수동 촬영 및 저장
     function capturePhoto() {
-      flashOverlay.classList.remove('flash-anim'); void flashOverlay.offsetWidth; flashOverlay.classList.add('flash-anim');
+      // 찰칵 플래시 연출
+      flashOverlay.classList.remove('flash-anim');
+      void flashOverlay.offsetWidth;
+      flashOverlay.classList.add('flash-anim');
+      if (navigator.vibrate) navigator.vibrate(60);
+
       const captureCanvas = document.createElement('canvas');
-      captureCanvas.width = video.videoWidth; captureCanvas.height = video.videoHeight;
+      captureCanvas.width = video.videoWidth;
+      captureCanvas.height = video.videoHeight;
       const cCtx = captureCanvas.getContext('2d');
-      cCtx.filter = 'contrast(1.1) saturate(1.15)';
+
+      // AI 카메라 색감 보정 (대비 +10%, 채도 +14%)
+      cCtx.filter = 'contrast(1.10) saturate(1.14)';
       cCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
       captureCanvas.toBlob(blob => {
@@ -862,19 +531,21 @@
     }
 
     shutterBtn.addEventListener('click', capturePhoto);
-    autoBtn.addEventListener('click', () => {
-      isAutoShoot = !isAutoShoot; autoBtn.classList.toggle('active', isAutoShoot);
-      document.getElementById('auto-text').innerHTML = isAutoShoot ? 'AUTO<br>ON' : 'AUTO<br>OFF';
-    });
+
     flipBtn.addEventListener('click', async () => {
-      facingMode = (facingMode === 'environment') ? 'user' : 'environment'; await setupCamera();
+      facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+      await setupCamera();
     });
+
     btnRetake.addEventListener('click', () => {
-      previewModal.style.display = 'none'; capturedBlob = null; isLocked = false;
+      previewModal.style.display = 'none';
+      capturedBlob = null;
     });
+
+    // 다운로드 즉시 실행 (갤러리 직행)
     btnSave.addEventListener('click', () => {
       if (!capturedBlob) return;
-      const fileName = `smart_photo_${Date.now()}.jpg`;
+      const fileName = `best_shot_${Date.now()}.jpg`;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(capturedBlob);
       a.download = fileName;
@@ -882,12 +553,12 @@
       a.click();
       document.body.removeChild(a);
       previewModal.style.display = 'none';
-      resetSelection();
     });
 
+    // 시작
     setupCamera().then(() => {
-      initFaceDetector();
-      renderLoop();
+      initSensors();
+      render();
     });
   </script>
 </body>
