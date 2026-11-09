@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI Smart Guide Camera</title>
-  
+  <title>AI Smart Composition Camera</title>
   <style>
     * {
       box-sizing: border-box;
@@ -43,98 +42,98 @@
       z-index: 5;
     }
 
-    /* 상단 내비게이션 HUD */
-    #hud-bar {
+    /* 상단 통합 상태 HUD */
+    #hud-container {
       position: absolute;
-      top: 40px;
+      top: 36px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(10px);
-      color: #fff;
-      padding: 12px 22px;
-      border-radius: 30px;
-      font-size: 15px;
-      font-weight: 700;
-      z-index: 20;
+      width: 90%;
+      max-width: 420px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      white-space: nowrap;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      gap: 8px;
+      z-index: 25;
+      pointer-events: none;
     }
-    #hud-icon {
-      font-size: 18px;
-    }
-
-    /* 피사체 선택 확인 팝업 (하단 시트 형태) */
-    #confirm-dialog {
-      position: absolute;
-      bottom: 120px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      width: 88%;
-      max-width: 360px;
-      background: rgba(18, 18, 20, 0.92);
-      backdrop-filter: blur(16px);
-      border: 1.5px solid rgba(255, 215, 0, 0.5);
-      border-radius: 20px;
-      padding: 18px 20px;
-      z-index: 30;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-      display: none;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      text-align: center;
-    }
-    #confirm-dialog.show {
-      display: block;
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-    .dialog-title {
-      color: #ffd700;
-      font-size: 16px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .dialog-desc {
-      color: #cbd5e1;
-      font-size: 13px;
-      line-height: 1.4;
-      margin-bottom: 16px;
-    }
-    .dialog-btns {
-      display: flex;
-      gap: 10px;
-    }
-    .dialog-btn {
-      flex: 1;
-      padding: 12px;
-      border-radius: 12px;
+    #hud-bar {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 24px;
       font-size: 14px;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+    #env-warning-bar {
+      background: rgba(220, 38, 38, 0.9);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.95; }
+      50% { opacity: 0.7; }
+    }
+
+    /* 피사체 위 미니 액션 툴바 (화면 가림 방지) */
+    #subject-toolbar {
+      position: absolute;
+      display: none;
+      z-index: 30;
+      gap: 8px;
+      transform: translate(-50%, -100%);
+      margin-top: -12px;
+    }
+    .tool-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
       border: none;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
     }
-    #btn-guide-start { background: #3b82f6; color: #fff; }
-    #btn-guide-cancel { background: #334155; color: #94a3b8; }
+    #btn-start-guide {
+      background: #3b82f6;
+      color: #fff;
+      border: 1px solid #60a5fa;
+    }
+    #btn-cancel-select {
+      background: rgba(30, 41, 59, 0.85);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-    /* 가이드 중지 버튼 (상단 우측) */
+    /* 가이드 취소 버튼 */
     #stop-guide-btn {
       position: absolute;
-      top: 45px;
+      top: 40px;
       right: 18px;
       background: rgba(239, 68, 68, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: #fff;
       font-size: 12px;
       font-weight: 700;
-      padding: 8px 14px;
-      border-radius: 20px;
-      z-index: 25;
+      padding: 7px 12px;
+      border-radius: 18px;
+      z-index: 30;
       display: none;
       cursor: pointer;
     }
@@ -161,7 +160,6 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     .btn-sub {
       width: 52px;
@@ -174,8 +172,8 @@
       border-color: #4ade80;
     }
     #shutter-btn {
-      width: 78px;
-      height: 78px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       border: 4px solid #ffffff;
       background: transparent;
@@ -213,23 +211,24 @@
     }
     .modal-actions {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       width: 100%;
       max-width: 360px;
     }
     .action-btn {
       flex: 1;
-      padding: 16px;
+      padding: 15px;
       border-radius: 14px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       border: none;
       cursor: pointer;
     }
     #btn-retake { background: #27272a; color: #fff; }
     #btn-save { background: #22c55e; color: #fff; }
+    #btn-share { background: #3b82f6; color: #fff; display: none; }
 
-    /* 화면 깜빡임 플래시 효과 */
+    /* 화면 플래시 */
     #flash-overlay {
       position: absolute;
       inset: 0;
@@ -238,9 +237,7 @@
       pointer-events: none;
       z-index: 80;
     }
-    .flash-anim {
-      animation: flash 0.3s ease-out;
-    }
+    .flash-anim { animation: flash 0.3s ease-out; }
     @keyframes flash {
       0% { opacity: 0.9; }
       100% { opacity: 0; }
@@ -254,26 +251,24 @@
     <canvas id="overlay"></canvas>
     <div id="flash-overlay"></div>
 
-    <!-- 상단 가이드 안내 HUD -->
-    <div id="hud-bar">
-      <span id="hud-icon">👆</span>
-      <span id="hud-text">화면에서 촬영할 피사체를 터치하세요</span>
+    <!-- 상단 HUD -->
+    <div id="hud-container">
+      <div id="hud-bar">
+        <span id="hud-icon">👆</span>
+        <span id="hud-text">화면에서 촬영할 대상을 터치하세요</span>
+      </div>
+      <div id="env-warning-bar">⚠️ 배경이 너무 복잡하여 깔끔한 사진을 찍기 어렵습니다</div>
     </div>
 
-    <!-- 가이드 취소/중지 버튼 -->
+    <!-- 미니 플로팅 툴바 (피사체 머리 위에 노출) -->
+    <div id="subject-toolbar">
+      <button class="tool-btn" id="btn-start-guide">🚀 가이드 시작</button>
+      <button class="tool-btn" id="btn-cancel-select">✕</button>
+    </div>
+
     <button id="stop-guide-btn">가이드 종료 ✕</button>
 
-    <!-- 피사체 선택 확인 팝업 -->
-    <div id="confirm-dialog">
-      <div class="dialog-title">이 피사체로 가이드를 시작할까요?</div>
-      <div class="dialog-desc">선택한 피사체가 화면에서 사라지기 전까지<br>최적의 황금비율 구도를 실시간으로 안내합니다.</div>
-      <div class="dialog-btns">
-        <button class="dialog-btn" id="btn-guide-cancel">취소</button>
-        <button class="dialog-btn" id="btn-guide-start">가이드 시작</button>
-      </div>
-    </div>
-
-    <!-- 하단 셔터 및 컨트롤 바 -->
+    <!-- 하단 컨트롤 -->
     <div id="controls">
       <button class="btn-circle btn-sub" id="auto-btn">
         <span id="auto-text">AUTO<br>OFF</span>
@@ -285,11 +280,12 @@
 
   <!-- 결과 미리보기 모달 -->
   <div id="preview-modal">
-    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ AI 최적 구도 촬영 완료</div>
+    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ AI 구도 최적화 완료</div>
     <img id="preview-img" alt="촬영된 사진">
     <div class="modal-actions">
       <button class="action-btn" id="btn-retake">다시 찍기</button>
       <button class="action-btn" id="btn-save">저장하기</button>
+      <button class="action-btn" id="btn-share">공유</button>
     </div>
   </div>
 
@@ -300,9 +296,10 @@
     const hudBar = document.getElementById('hud-bar');
     const hudIcon = document.getElementById('hud-icon');
     const hudText = document.getElementById('hud-text');
-    const confirmDialog = document.getElementById('confirm-dialog');
-    const btnGuideStart = document.getElementById('btn-guide-start');
-    const btnGuideCancel = document.getElementById('btn-guide-cancel');
+    const envWarningBar = document.getElementById('env-warning-bar');
+    const subjectToolbar = document.getElementById('subject-toolbar');
+    const btnStartGuide = document.getElementById('btn-start-guide');
+    const btnCancelSelect = document.getElementById('btn-cancel-select');
     const stopGuideBtn = document.getElementById('stop-guide-btn');
     const autoBtn = document.getElementById('auto-btn');
     const shutterBtn = document.getElementById('shutter-btn');
@@ -312,9 +309,9 @@
     const previewImg = document.getElementById('preview-img');
     const btnRetake = document.getElementById('btn-retake');
     const btnSave = document.getElementById('btn-save');
+    const btnShare = document.getElementById('btn-share');
 
-    // 앱 상태 모드: 'IDLE' | 'PENDING' | 'GUIDING'
-    let appMode = 'IDLE';
+    let appMode = 'IDLE'; // 'IDLE' | 'SELECTED' | 'GUIDING'
     let isAutoShoot = false;
     let facingMode = 'environment';
     let currentStream = null;
@@ -322,28 +319,23 @@
     let lockTimer = null;
     let isLocked = false;
 
-    // 피사체 데이터
-    let candidatePoint = null; // 터치한 좌표
-    let trackedBox = { x: 0, y: 0, w: 140, h: 140 };
-    let patchTemplate = null; // 템플릿 패치 데이터
-    let patchSize = 24;
-    let lostFrameCounter = 0;
+    // 분석용 다운샘플링 캔버스 (환경 진단 및 트래킹 고속화)
+    const procCanvas = document.createElement('canvas');
+    const procCtx = procCanvas.getContext('2d', { willReadFrequently: true });
+    procCanvas.width = 160;
+    procCanvas.height = 120;
 
-    // 오프스크린 캔버스 (경량 트래커용)
-    const trackCanvas = document.createElement('canvas');
-    const trackCtx = trackCanvas.getContext('2d', { willReadFrequently: true });
-    trackCanvas.width = 120;
-    trackCanvas.height = 120;
+    // 피사체 데이터
+    let trackedBox = { x: 0, y: 0, w: 0, h: 0 };
+    let targetTemplate = null;
+    let sceneClutterScore = 0; // 배경 복잡도
+    let sceneLightScore = 128; // 조도
 
     // 1. 카메라 시작
     async function setupCamera() {
       if (currentStream) currentStream.getTracks().forEach(t => t.stop());
       const constraints = {
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
+        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -364,237 +356,238 @@
     }
     window.addEventListener('resize', resizeCanvas);
 
-    // 2. 화면 터치 및 좌표 계산
+    // 2. 환경 진단 엔진 (조도 및 배경 복잡도 측정)
+    function analyzeEnvironment() {
+      procCtx.drawImage(video, 0, 0, 160, 120);
+      const imgData = procCtx.getImageData(0, 0, 160, 120);
+      const data = imgData.data;
+
+      let totalBrightness = 0;
+      let edgeCount = 0;
+
+      // 간이 소벨(Sobel)/그라디언트 엣지 밀도 계산
+      for (let y = 1; y < 119; y += 2) {
+        for (let x = 1; x < 159; x += 2) {
+          const idx = (y * 160 + x) * 4;
+          const gray = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+          totalBrightness += gray;
+
+          const rightIdx = (y * 160 + (x + 1)) * 4;
+          const downIdx = ((y + 1) * 160 + x) * 4;
+          const grayRight = 0.299 * data[rightIdx] + 0.587 * data[rightIdx+1] + 0.114 * data[rightIdx+2];
+          const grayDown = 0.299 * data[downIdx] + 0.587 * data[downIdx+1] + 0.114 * data[downIdx+2];
+
+          const diff = Math.abs(gray - grayRight) + Math.abs(gray - grayDown);
+          if (diff > 42) edgeCount++;
+        }
+      }
+
+      sceneLightScore = totalBrightness / (80 * 60);
+      sceneClutterScore = edgeCount; // 복잡도 지수 (정돈된 벽: < 350, 옷더미/책장: > 850)
+    }
+
+    // 3. 피사체 형태 적응형 박스 생성 (Edge-Aware Expansion)
+    function calculateAdaptiveBounds(touchX, touchY) {
+      const W = overlay.width;
+      const H = overlay.height;
+
+      // 터치 좌표를 procCanvas(160x120) 비율로 매핑
+      const px = Math.floor((touchX / W) * 160);
+      const py = Math.floor((touchY / H) * 120);
+
+      const imgData = procCtx.getImageData(0, 0, 160, 120);
+      const d = imgData.data;
+      const seedIdx = (py * 160 + px) * 4;
+      const seedR = d[seedIdx], seedG = d[seedIdx+1], seedB = d[seedIdx+2];
+
+      // 터치 지점부터 상/하/좌/우로 색상 차이가 크게 벌어지는 경계 탐색
+      function scanDir(dx, dy, maxDist) {
+        let dist = 0;
+        let cx = px, cy = py;
+        while (dist < maxDist) {
+          cx += dx; cy += dy;
+          if (cx < 0 || cx >= 160 || cy < 0 || cy >= 120) break;
+          const idx = (cy * 160 + cx) * 4;
+          const colorDiff = Math.abs(d[idx] - seedR) + Math.abs(d[idx+1] - seedG) + Math.abs(d[idx+2] - seedB);
+          if (colorDiff > 70) break; // 피사체 경계 감지
+          dist++;
+        }
+        return dist;
+      }
+
+      const left = scanDir(-1, 0, 45);
+      const right = scanDir(1, 0, 45);
+      const up = scanDir(0, -1, 55);
+      const down = scanDir(0, 1, 55);
+
+      // 캔버스 크기로 역변환 (최소 크기 보장)
+      const scaleX = W / 160;
+      const scaleY = H / 120;
+
+      const minW = W * 0.22;
+      const minH = H * 0.22;
+
+      let boundW = Math.max(minW, (left + right) * scaleX * 1.3);
+      let boundH = Math.max(minH, (up + down) * scaleY * 1.3);
+
+      return {
+        x: Math.max(10, touchX - boundW * (left / (left + right || 1))),
+        y: Math.max(10, touchY - boundH * (up / (up + down || 1))),
+        w: Math.min(W - 20, boundW),
+        h: Math.min(H - 20, boundH)
+      };
+    }
+
+    // 4. 터치 이벤트
     overlay.addEventListener('pointerdown', (e) => {
-      if (appMode === 'GUIDING') return; // 이미 가이드 중일 때는 터치 무시
+      if (appMode === 'GUIDING') return;
 
       const rect = overlay.getBoundingClientRect();
       const scaleX = overlay.width / rect.width;
       const scaleY = overlay.height / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
+      const touchX = (e.clientX - rect.left) * scaleX;
+      const touchY = (e.clientY - rect.top) * scaleY;
 
-      // 피사체 후보 설정
-      const defaultSize = Math.min(overlay.width, overlay.height) * 0.22;
-      trackedBox = {
-        x: x - defaultSize / 2,
-        y: y - defaultSize / 2,
-        w: defaultSize,
-        h: defaultSize
-      };
-      candidatePoint = { x, y };
+      // 피사체 형태 계산
+      trackedBox = calculateAdaptiveBounds(touchX, touchY);
+      appMode = 'SELECTED';
 
-      // 상태 전환 및 확인 다이얼로그 표시
-      appMode = 'PENDING';
-      confirmDialog.classList.add('show');
-      updateHUD('🔍', '이 피사체로 가이드를 시작할까요?', '#facc15');
+      // 툴바 위치를 캔버스 기준에서 브라우저 화면 픽셀 기준으로 배치
+      const screenX = (trackedBox.x + trackedBox.w / 2) / scaleX + rect.left;
+      const screenY = trackedBox.y / scaleY + rect.top;
+
+      subjectToolbar.style.left = `${screenX}px`;
+      subjectToolbar.style.top = `${screenY}px`;
+      subjectToolbar.style.display = 'flex';
+
+      updateHUD('🔍', '피사체가 지정되었습니다. [가이드 시작]을 누르세요', '#facc15');
     });
 
-    // 가이드 시작 버튼 클릭
-    btnGuideStart.addEventListener('click', () => {
+    btnStartGuide.addEventListener('click', () => {
       appMode = 'GUIDING';
-      confirmDialog.classList.remove('show');
+      subjectToolbar.style.display = 'none';
       stopGuideBtn.style.display = 'block';
-
-      // 터치 지점의 패치 템플릿 추출 (어떤 사물이든 트래킹하기 위함)
-      capturePatchTemplate();
-      lostFrameCounter = 0;
-      updateHUD('🎯', '피사체를 타깃 원으로 유도하세요', '#38bdf8');
+      updateHUD('🎯', '피사체 크기와 구도를 맞춥니다', '#38bdf8');
     });
 
-    // 취소 버튼
-    btnGuideCancel.addEventListener('click', resetToIdle);
+    btnCancelSelect.addEventListener('click', resetToIdle);
     stopGuideBtn.addEventListener('click', resetToIdle);
 
     function resetToIdle() {
       appMode = 'IDLE';
-      confirmDialog.classList.remove('show');
+      subjectToolbar.style.display = 'none';
       stopGuideBtn.style.display = 'none';
-      candidatePoint = null;
-      patchTemplate = null;
       isLocked = false;
       clearTimeout(lockTimer);
-      updateHUD('👆', '화면에서 촬영할 피사체를 터치하세요', 'rgba(15, 23, 42, 0.85)');
+      envWarningBar.style.display = 'none';
+      updateHUD('👆', '화면에서 촬영할 대상을 터치하세요', 'rgba(15, 23, 42, 0.88)');
     }
 
-    // 3. 트래킹 패치 추출 (24x24 Grayscale)
-    function capturePatchTemplate() {
-      const cx = trackedBox.x + trackedBox.w / 2;
-      const cy = trackedBox.y + trackedBox.h / 2;
-      trackCtx.drawImage(video, cx - 12, cy - 12, 24, 24, 0, 0, 24, 24);
-      const imgData = trackCtx.getImageData(0, 0, 24, 24);
-      patchTemplate = new Float32Array(24 * 24);
-      for (let i = 0; i < imgData.data.length; i += 4) {
-        // 밝기(Grayscale) 계산
-        patchTemplate[i / 4] = 0.299 * imgData.data[i] + 0.587 * imgData.data[i+1] + 0.114 * imgData.data[i+2];
-      }
-    }
-
-    // 4. 메인 렌더링 및 가이드 루프
-    function processLoop() {
+    // 5. 메인 처리 루프
+    let frameCount = 0;
+    function renderLoop() {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       drawGrid();
 
-      if (appMode === 'PENDING') {
-        // 선택 대기 상태: 터치한 위치에 노란색 포커스 링 표시
-        drawTargetBox(trackedBox, '#ffd700', '선택 대기');
+      // 10프레임마다 환경 상태 분석 (성능 최적화)
+      if (++frameCount % 10 === 0) {
+        analyzeEnvironment();
+        evaluateEnvironmentWarning();
+      }
+
+      if (appMode === 'SELECTED') {
+        drawAdaptiveBox(trackedBox, '#ffd700', '선택된 피사체');
       } 
       else if (appMode === 'GUIDING') {
-        // 가이드 진행 상태: 피사체 추적 및 구도 안내
-        trackSubject();
+        processSmartGuiding();
       }
 
-      requestAnimationFrame(processLoop);
+      requestAnimationFrame(renderLoop);
     }
 
-    // 피사체 추적 및 이탈 검사
-    function trackSubject() {
+    // 환경 불량 경고 노출 판단
+    function evaluateEnvironmentWarning() {
+      if (sceneLightScore < 38) {
+        envWarningBar.innerText = '⚠️ 주변이 너무 어둡습니다. 조명을 켜거나 밝은 곳으로 이동하세요';
+        envWarningBar.style.display = 'block';
+        return;
+      }
+      if (sceneClutterScore > 820) {
+        envWarningBar.innerText = '⚠️ 배경이 너무 복잡하여 깔끔한 사진을 찍기 어렵습니다. 정돈된 배경을 찾아보세요';
+        envWarningBar.style.display = 'block';
+        return;
+      }
+      envWarningBar.style.display = 'none';
+    }
+
+    // 6. 2단계 스마트 구도 안내 엔진 (크기 검증 → 위치 안내)
+    function processSmartGuiding() {
       const W = overlay.width;
       const H = overlay.height;
-      const cx = trackedBox.x + trackedBox.w / 2;
-      const cy = trackedBox.y + trackedBox.h / 2;
+      const subjectArea = trackedBox.w * trackedBox.h;
+      const screenArea = W * H;
+      const areaRatio = subjectArea / screenArea;
 
-      // 1. 화면 밖으로 완전히 벗어났는지 검사
-      if (cx < -50 || cx > W + 50 || cy < -50 || cy > H + 50) {
-        lostFrameCounter++;
-        if (lostFrameCounter > 25) {
-          triggerObjectLost();
-          return;
-        }
+      drawAdaptiveBox(trackedBox, '#38bdf8', '추적 중');
+
+      // [1단계: 거리/크기 검증] 화면의 14% 미만으로 너무 작으면 거리 조정 안내
+      if (areaRatio < 0.14) {
+        updateHUD('🔍', '피사체가 너무 작습니다. 한 걸음 더 앞으로 다가가세요', '#f97316');
+        return;
       }
 
-      // 2. 경량 패치 매칭 (주변 탐색)
-      if (patchTemplate) {
-        const searchSize = 80;
-        trackCtx.drawImage(
-          video,
-          cx - searchSize / 2, cy - searchSize / 2, searchSize, searchSize,
-          0, 0, 80, 80
-        );
-        const searchData = trackCtx.getImageData(0, 0, 80, 80);
-
-        let bestSAD = Infinity;
-        let bestDx = 0;
-        let bestDy = 0;
-
-        // 서치 윈도우 스캔 (2픽셀 스텝으로 고속 연산)
-        for (let y = 0; y <= searchSize - patchSize; y += 3) {
-          for (let x = 0; x <= searchSize - patchSize; x += 3) {
-            let sad = 0;
-            for (let py = 0; py < patchSize; py += 2) {
-              for (let px = 0; px < patchSize; px += 2) {
-                const sIdx = ((y + py) * 80 + (x + px)) * 4;
-                const gray = 0.299 * searchData.data[sIdx] + 0.587 * searchData.data[sIdx+1] + 0.114 * searchData.data[sIdx+2];
-                sad += Math.abs(gray - patchTemplate[py * patchSize + px]);
-              }
-            }
-            if (sad < bestSAD) {
-              bestSAD = sad;
-              bestDx = x - (searchSize - patchSize) / 2;
-              bestDy = y - (searchSize - patchSize) / 2;
-            }
-          }
-        }
-
-        // 매칭 임계치 검사 (너무 다르면 피사체가 가려졌거나 이탈한 것)
-        const avgDiff = bestSAD / (12 * 12);
-        if (avgDiff > 75) {
-          lostFrameCounter++;
-          if (lostFrameCounter > 40) {
-            triggerObjectLost();
-            return;
-          }
-        } else {
-          lostFrameCounter = 0;
-          // 부드러운 위치 갱신 (Lerp)
-          trackedBox.x += bestDx * 0.35;
-          trackedBox.y += bestDy * 0.35;
-        }
+      // [2단계: 환경 불량 상태면 '완벽한 구도' 차단]
+      if (sceneClutterScore > 820) {
+        updateHUD('⚠️', '배경에 물건이 많아 산만합니다. 각도를 돌려 깔끔한 곳을 비춰보세요', '#ef4444');
+        return;
       }
 
-      // 피사체 테두리 렌더링
-      drawTargetBox(trackedBox, '#38bdf8', '추적 중인 피사체');
-
-      // 3. 최적 구도 계산 및 화살표 가이드
-      guideToOptimalRuleOfThirds();
-    }
-
-    // 피사체 화면 이탈 알림
-    function triggerObjectLost() {
-      updateHUD('⚠️', '피사체가 화면을 벗어났습니다', '#ef4444');
-      if (navigator.vibrate) navigator.vibrate(200);
-      setTimeout(resetToIdle, 1800);
-    }
-
-    // 5. 황금비율(3분할) 내비게이션 엔진
-    function guideToOptimalRuleOfThirds() {
-      const W = overlay.width;
-      const H = overlay.height;
-
-      // 3분할의 4대 교차점
-      const rulePoints = [
+      // [3단계: 3분할 황금비율 위치 가이드]
+      const curCenter = { x: trackedBox.x + trackedBox.w / 2, y: trackedBox.y + trackedBox.h / 2 };
+      const targets = [
         { x: W / 3, y: H / 3 },
         { x: (W * 2) / 3, y: H / 3 },
         { x: W / 3, y: (H * 2) / 3 },
         { x: (W * 2) / 3, y: (H * 2) / 3 }
       ];
 
-      const curCenter = {
-        x: trackedBox.x + trackedBox.w / 2,
-        y: trackedBox.y + trackedBox.h / 2
-      };
-
-      // 가장 가까운 3분할 교차점 선택
-      let targetPt = rulePoints[0];
-      let minDist = Infinity;
-      rulePoints.forEach(pt => {
+      let targetPt = targets[0], minDist = Infinity;
+      targets.forEach(pt => {
         const d = Math.hypot(pt.x - curCenter.x, pt.y - curCenter.y);
-        if (d < minDist) {
-          minDist = d;
-          targetPt = pt;
-        }
+        if (d < minDist) { minDist = d; targetPt = pt; }
       });
 
-      const alignThreshold = Math.min(W, H) * 0.08; // 약 8% 반경 안이면 일치 판정
+      const alignThreshold = Math.min(W, H) * 0.09;
       const isAligned = minDist <= alignThreshold;
 
-      // 가이드 타깃 링 렌더링
+      // 타깃 링 그리기
       ctx.save();
       ctx.beginPath();
       ctx.arc(targetPt.x, targetPt.y, alignThreshold, 0, Math.PI * 2);
 
       if (isAligned) {
-        // [완벽한 구도 일치 상태]
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.25)';
-        ctx.fill();
+        // 완벽 정렬 상태
+        ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 4; ctx.stroke();
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.25)'; ctx.fill();
 
-        updateHUD('✨', isAutoShoot ? '완벽한 구도! 촬영 중...' : '완벽한 구도! 지금 셔터를 누르세요', '#22c55e');
+        updateHUD('✨', isAutoShoot ? '완벽한 구도! 자동 촬영 중...' : '완벽한 구도! 셔터를 누르세요', '#22c55e');
 
         if (!isLocked) {
           isLocked = true;
           if (navigator.vibrate) navigator.vibrate(50);
           if (isAutoShoot) {
             clearTimeout(lockTimer);
-            lockTimer = setTimeout(capturePhoto, 900);
+            lockTimer = setTimeout(capturePhoto, 800);
           }
         }
       } else {
-        // [구도 보정 필요 상태]
+        // 이동 안내
         isLocked = false;
         clearTimeout(lockTimer);
 
-        ctx.strokeStyle = '#facc15';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([8, 6]);
-        ctx.stroke();
+        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]); ctx.stroke();
+        drawArrow(curCenter, targetPt);
 
-        // 방향 유도 화살표 및 선분 렌더링
-        drawGuideArrow(curCenter, targetPt);
-
-        // 명확한 텍스트 지시 생성
         const dx = targetPt.x - curCenter.x;
         const dy = targetPt.y - curCenter.y;
         generateDirectionInstruction(dx, dy);
@@ -602,111 +595,73 @@
       ctx.restore();
     }
 
-    // 명확한 이동 방향 텍스트 HUD 생성
     function generateDirectionInstruction(dx, dy) {
-      let horizontal = '';
-      let vertical = '';
-      let arrow = '';
-
-      if (Math.abs(dx) > 35) {
-        horizontal = dx > 0 ? '오른쪽' : '왼쪽';
-      }
-      if (Math.abs(dy) > 35) {
-        vertical = dy > 0 ? '아래' : '위';
-      }
+      let horizontal = '', vertical = '', arrow = '';
+      if (Math.abs(dx) > 30) horizontal = dx > 0 ? '오른쪽' : '왼쪽';
+      if (Math.abs(dy) > 30) vertical = dy > 0 ? '아래' : '위';
 
       if (horizontal && vertical) {
         arrow = (dx > 0 && dy > 0) ? '↘' : (dx > 0 && dy < 0) ? '↗' : (dx < 0 && dy > 0) ? '↙' : '↖';
-        updateHUD(arrow, `카메라를 ${horizontal} ${vertical}로 살짝 이동하세요`, '#0284c7');
+        updateHUD(arrow, `카메라를 ${horizontal} ${vertical}로 이동하세요`, '#0284c7');
       } else if (horizontal) {
-        arrow = dx > 0 ? '➔' : '⬅';
-        updateHUD(arrow, `카메라를 ${horizontal}으로 이동하세요`, '#0284c7');
+        arrow = dx > 0 ? '➔' : '⬅'; updateHUD(arrow, `카메라를 ${horizontal}으로 이동하세요`, '#0284c7');
       } else if (vertical) {
-        arrow = dy > 0 ? '⬇' : '⬆';
-        updateHUD(arrow, `카메라를 ${vertical}로 이동하세요`, '#0284c7');
+        arrow = dy > 0 ? '⬇' : '⬆'; updateHUD(arrow, `카메라를 ${vertical}로 이동하세요`, '#0284c7');
       } else {
         updateHUD('🎯', '조금만 더 원 중심에 맞춰보세요', '#0284c7');
       }
     }
 
-    // 피사체에서 타깃으로 뻗는 화살표 유도선
-    function drawGuideArrow(from, to) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // 끝단 화살표 헤드
-      const angle = Math.atan2(to.y - from.y, to.x - from.x);
-      const headLen = 14;
-      ctx.beginPath();
-      ctx.moveTo(to.x, to.y);
-      ctx.lineTo(to.x - headLen * Math.cos(angle - Math.PI / 6), to.y - headLen * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(to.x - headLen * Math.cos(angle + Math.PI / 6), to.y - headLen * Math.sin(angle + Math.PI / 6));
-      ctx.fillStyle = '#38bdf8';
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 6. 뷰어 및 UI 드로잉 유틸
-    function updateHUD(icon, text, bg) {
-      hudIcon.innerText = icon;
-      hudText.innerText = text;
-      if (bg) hudBar.style.background = bg;
+    function drawArrow(from, to) {
+      ctx.save(); ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y);
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.stroke();
+      const angle = Math.atan2(to.y - from.y, to.x - from.x), len = 14;
+      ctx.beginPath(); ctx.moveTo(to.x, to.y);
+      ctx.lineTo(to.x - len * Math.cos(angle - Math.PI / 6), to.y - len * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to.x - len * Math.cos(angle + Math.PI / 6), to.y - len * Math.sin(angle + Math.PI / 6));
+      ctx.fillStyle = '#38bdf8'; ctx.fill(); ctx.restore();
     }
 
     function drawGrid() {
-      const W = overlay.width;
-      const H = overlay.height;
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.lineWidth = 1;
+      const W = overlay.width, H = overlay.height;
+      ctx.save(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)'; ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H);
       ctx.moveTo((W * 2) / 3, 0); ctx.lineTo((W * 2) / 3, H);
       ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3);
       ctx.moveTo(0, (H * 2) / 3); ctx.lineTo(W, (H * 2) / 3);
-      ctx.stroke();
-      ctx.restore();
+      ctx.stroke(); ctx.restore();
     }
 
-    function drawTargetBox(box, color, label) {
+    function drawAdaptiveBox(box, color, label) {
       ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = color; ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.w, box.h);
 
-      // 중심점 마커
-      ctx.beginPath();
-      ctx.arc(box.x + box.w / 2, box.y + box.h / 2, 6, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
+      // 모서리 포인트
+      ctx.beginPath(); ctx.arc(box.x + box.w / 2, box.y + box.h / 2, 5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
 
       // 라벨
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
       ctx.fillRect(box.x, Math.max(0, box.y - 24), ctx.measureText(label).width + 16, 22);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif';
       ctx.fillText(label, box.x + 8, Math.max(16, box.y - 8));
       ctx.restore();
     }
 
-    // 7. 촬영 및 저장
+    function updateHUD(icon, text, bg) {
+      hudIcon.innerText = icon; hudText.innerText = text;
+      if (bg) hudBar.style.background = bg;
+    }
+
+    // 7. 촬영 및 다운로드 (번거로운 공유창 대신 직관적 저장)
     function capturePhoto() {
-      flashOverlay.classList.remove('flash-anim');
-      void flashOverlay.offsetWidth;
-      flashOverlay.classList.add('flash-anim');
-
+      flashOverlay.classList.remove('flash-anim'); void flashOverlay.offsetWidth; flashOverlay.classList.add('flash-anim');
       const captureCanvas = document.createElement('canvas');
-      captureCanvas.width = video.videoWidth;
-      captureCanvas.height = video.videoHeight;
+      captureCanvas.width = video.videoWidth; captureCanvas.height = video.videoHeight;
       const cCtx = captureCanvas.getContext('2d');
-
-      // AI 카메라 색감 보정 필터
-      cCtx.filter = 'contrast(1.12) saturate(1.18)';
+      cCtx.filter = 'contrast(1.1) saturate(1.15)';
       cCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
       captureCanvas.toBlob(blob => {
@@ -719,51 +674,34 @@
     shutterBtn.addEventListener('click', capturePhoto);
 
     autoBtn.addEventListener('click', () => {
-      isAutoShoot = !isAutoShoot;
-      autoBtn.classList.toggle('active', isAutoShoot);
+      isAutoShoot = !isAutoShoot; autoBtn.classList.toggle('active', isAutoShoot);
       document.getElementById('auto-text').innerHTML = isAutoShoot ? 'AUTO<br>ON' : 'AUTO<br>OFF';
     });
 
     flipBtn.addEventListener('click', async () => {
-      facingMode = (facingMode === 'environment') ? 'user' : 'environment';
-      await setupCamera();
+      facingMode = (facingMode === 'environment') ? 'user' : 'environment'; await setupCamera();
     });
 
     btnRetake.addEventListener('click', () => {
-      previewModal.style.display = 'none';
-      capturedBlob = null;
-      isLocked = false;
+      previewModal.style.display = 'none'; capturedBlob = null; isLocked = false;
     });
 
-    btnSave.addEventListener('click', async () => {
+    // 다운로드 바로 실행 (갤러리 즉시 유입)
+    btnSave.addEventListener('click', () => {
       if (!capturedBlob) return;
-      const fileName = `perfect_shot_${Date.now()}.jpg`;
-      const file = new File([capturedBlob], fileName, { type: 'image/jpeg' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: '완벽한 구도 사진'
-          });
-          previewModal.style.display = 'none';
-          resetToIdle();
-          return;
-        } catch (e) {}
-      }
-
+      const fileName = `smart_photo_${Date.now()}.jpg`;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(capturedBlob);
       a.download = fileName;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+
       previewModal.style.display = 'none';
       resetToIdle();
     });
 
-    // 시작
-    setupCamera().then(() => {
-      processLoop();
-    });
+    setupCamera().then(() => { renderLoop(); });
   </script>
 </body>
 </html>
