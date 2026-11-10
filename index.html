@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart Composition Camera</title>
+  <title>AI Photo Director Camera</title>
   <style>
     * {
       box-sizing: border-box;
@@ -42,50 +42,73 @@
       z-index: 5;
     }
 
-    /* 상단 안내 바 */
-    #hud-bar {
+    /* 상단 포토 디렉터 코칭 HUD */
+    #director-hud {
       position: absolute;
-      top: 40px;
+      top: 36px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(12px);
+      width: 90%;
+      max-width: 420px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      border-radius: 20px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 25;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #hud-step-badge {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #3b82f6;
       color: #fff;
-      padding: 10px 22px;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: 700;
+      text-transform: uppercase;
+    }
+    #hud-command {
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      white-space: nowrap;
-      z-index: 25;
-      pointer-events: none;
-      transition: all 0.2s ease;
+      color: #fff;
+      font-size: 14.5px;
+      font-weight: 700;
+      text-align: center;
+      white-space: pre-line;
+      line-height: 1.35;
+    }
+    #hud-command-icon {
+      font-size: 20px;
     }
 
-    /* 중앙 복귀 버튼 */
-    #reset-pos-btn {
+    /* 포커스 초기화 버튼 */
+    #reset-focus-btn {
       position: absolute;
-      top: 88px;
+      top: 118px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.65);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.35);
       color: #cbd5e1;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 600;
-      padding: 5px 14px;
+      padding: 6px 14px;
       border-radius: 16px;
       z-index: 25;
       display: none;
       cursor: pointer;
     }
 
-    /* 하단 셔터 및 컨트롤 */
+    /* 하단 셔터 및 컨트롤 바 */
     #controls {
       position: absolute;
       bottom: 35px;
@@ -112,14 +135,14 @@
       cursor: pointer;
     }
     #shutter-btn {
-      width: 80px;
-      height: 80px;
+      width: 82px;
+      height: 82px;
       border-radius: 50%;
       border: 4px solid #ffffff;
       background: transparent;
       padding: 4px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
     #shutter-inner {
       width: 100%;
@@ -132,34 +155,14 @@
       transform: scale(0.88);
     }
 
-    /* 베스트 구도 시 셔터 발광 */
-    #shutter-btn.ready {
+    /* 베스트 샷 도달 시 셔터 반응 */
+    #shutter-btn.perfect-shot {
       border-color: #22c55e;
-      box-shadow: 0 0 25px rgba(34, 197, 94, 0.85);
-      transform: scale(1.06);
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.85);
+      transform: scale(1.08);
     }
-    #shutter-btn.ready #shutter-inner {
+    #shutter-btn.perfect-shot #shutter-inner {
       background: #22c55e;
-    }
-
-    /* 터치 파동 효과 */
-    .touch-ring {
-      position: absolute;
-      width: 44px;
-      height: 44px;
-      border: 2px solid #38bdf8;
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0.4);
-      opacity: 1;
-      pointer-events: none;
-      z-index: 15;
-      animation: ripple 0.45s ease-out forwards;
-    }
-    @keyframes ripple {
-      to {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 0;
-      }
     }
 
     /* 플래시 애니메이션 */
@@ -221,12 +224,16 @@
     <canvas id="overlay"></canvas>
     <div id="flash-overlay"></div>
 
-    <div id="hud-bar">
-      <span id="hud-icon">👆</span>
-      <span id="hud-text">강조할 피사체를 화면에서 탭하세요</span>
+    <!-- 포토 디렉터 코칭 HUD -->
+    <div id="director-hud">
+      <span id="hud-step-badge">DIRECTOR GUIDE</span>
+      <div id="hud-command">
+        <span id="hud-command-icon">👆</span>
+        <span id="hud-command-text">촬영할 피사체를 화면에서 터치하세요</span>
+      </div>
     </div>
 
-    <button id="reset-pos-btn">중앙 구도로 복귀 ↺</button>
+    <button id="reset-focus-btn">다른 피사체 선택 ✕</button>
 
     <div id="controls">
       <div style="width: 50px;"></div>
@@ -236,7 +243,7 @@
   </div>
 
   <div id="preview-modal">
-    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ 베스트 앵글 촬영 완료</div>
+    <div style="color: #4ade80; font-size: 14px; font-weight: 700; margin-top: 10px;">✨ 디렉터 추천 구도 촬영 완료</div>
     <img id="preview-img" alt="촬영된 사진">
     <div class="modal-actions">
       <button class="action-btn" id="btn-retake">다시 찍기</button>
@@ -248,10 +255,11 @@
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
     const ctx = overlay.getContext('2d');
-    const hudBar = document.getElementById('hud-bar');
-    const hudIcon = document.getElementById('hud-icon');
-    const hudText = document.getElementById('hud-text');
-    const resetPosBtn = document.getElementById('reset-pos-btn');
+    const directorHud = document.getElementById('director-hud');
+    const hudStepBadge = document.getElementById('hud-step-badge');
+    const hudCommandIcon = document.getElementById('hud-command-icon');
+    const hudCommandText = document.getElementById('hud-command-text');
+    const resetFocusBtn = document.getElementById('reset-focus-btn');
     const shutterBtn = document.getElementById('shutter-btn');
     const flipBtn = document.getElementById('flip-btn');
     const flashOverlay = document.getElementById('flash-overlay');
@@ -264,24 +272,18 @@
     let facingMode = 'environment';
     let capturedBlob = null;
 
-    // 자이로 기울기 변수
-    let tiltRoll = 0;
-    let tiltPitch = 0;
-    let smoothRoll = 0;
-    let smoothPitch = 0;
+    // 수평 센서
+    let tiltAngle = 0;
+    let smoothTilt = 0;
+    let isLevel = false;
 
-    // 동적 타깃 링 좌표
-    let currentTargetX = 0;
-    let currentTargetY = 0;
-    let destTargetX = 0;
-    let destTargetY = 0;
-    let isCustomTarget = false;
+    // 피사체 및 목표 프레임 데이터
+    let hasTarget = false;
+    let subjectAnchor = null;   // 사용자가 탭한 피사체 실제 위치
+    let idealFrame = null;      // 작가가 권장하는 화면 내 최적 배치 위치
+    let lastBeta = null, lastGamma = null;
 
-    let isAligned = false;
-    let wasAligned = false;
-    let lastTapTime = 0;
-
-    // 1. 카메라 시작
+    // 1. 카메라 스트림 시작
     async function setupCamera() {
       if (currentStream) currentStream.getTracks().forEach(t => t.stop());
       const constraints = {
@@ -295,7 +297,6 @@
         video.onloadedmetadata = () => {
           video.play();
           resizeCanvas();
-          resetToCenter();
           resolve();
         };
       });
@@ -304,191 +305,229 @@
     function resizeCanvas() {
       overlay.width = video.videoWidth || window.innerWidth;
       overlay.height = video.videoHeight || window.innerHeight;
-      if (!isCustomTarget) resetToCenter();
     }
     window.addEventListener('resize', resizeCanvas);
 
-    // 기본 중앙 구도 설정
-    function resetToCenter() {
-      const W = overlay.width;
-      const H = overlay.height;
-      destTargetX = W / 2;
-      destTargetY = H * 0.46; // 시각적 중심점
-      if (currentTargetX === 0) {
-        currentTargetX = destTargetX;
-        currentTargetY = destTargetY;
-      }
-      isCustomTarget = false;
-      resetPosBtn.style.display = 'none';
-      updateHUD('👆', '강조할 피사체를 화면에서 탭하세요', 'rgba(15, 23, 42, 0.88)');
-    }
-
-    resetPosBtn.addEventListener('click', resetToCenter);
-
-    // 2. 센서 연동
+    // 2. 스마트폰 모션 센서 연동 (촬영자가 움직일 때 앵커 위치 역보정)
     function initSensors() {
       if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', (e) => {
           if (e.gamma !== null && e.beta !== null) {
-            tiltRoll = e.gamma;
-            tiltPitch = e.beta - 70; // 폰의 기본 직립 각도 보정
+            tiltAngle = e.gamma;
+            smoothTilt += (tiltAngle - smoothTilt) * 0.2;
+            isLevel = Math.abs(smoothTilt) < 3.2;
+
+            if (hasTarget && subjectAnchor && lastBeta !== null && lastGamma !== null) {
+              const deltaX = (e.gamma - lastGamma) * 14;
+              const deltaY = (e.beta - lastBeta) * 14;
+              // 촬영자가 카메라를 돌리면 피사체 위치가 프레임 안에서 반대로 이동
+              subjectAnchor.x -= deltaX;
+              subjectAnchor.y -= deltaY;
+
+              subjectAnchor.x = Math.max(-100, Math.min(overlay.width + 100, subjectAnchor.x));
+              subjectAnchor.y = Math.max(-100, Math.min(overlay.height + 100, subjectAnchor.y));
+            }
+            lastBeta = e.beta;
+            lastGamma = e.gamma;
           }
         });
       }
     }
 
-    // 3. 화면 터치 처리 (황금 구도 포인트 자동 스냅)
+    // 3. 피사체 터치: 포토 디렉터의 이상적 구도(Ideal Composition) 연산
     overlay.addEventListener('pointerdown', (e) => {
-      const now = Date.now();
-      if (now - lastTapTime < 320) {
-        // 더블 탭 시 중앙 구도로 리셋
-        resetToCenter();
-        lastTapTime = 0;
-        return;
-      }
-      lastTapTime = now;
-
       const rect = overlay.getBoundingClientRect();
       const scaleX = overlay.width / rect.width;
       const scaleY = overlay.height / rect.height;
       const touchX = (e.clientX - rect.left) * scaleX;
       const touchY = (e.clientY - rect.top) * scaleY;
 
-      showTouchRipple(e.clientX, e.clientY);
+      subjectAnchor = { x: touchX, y: touchY };
+      hasTarget = true;
+      resetFocusBtn.style.display = 'block';
 
-      // 터치 지점과 가장 가까운 3분할 황금 비율 포인트 탐색
-      destTargetX = touchX;
-      destTargetY = touchY;
-      applyMagneticGoldenRatio(touchX, touchY);
+      // 디렉터가 이 피사체를 어디로 가져와야 할지 황금 프레임 지정
+      calculateIdealComposition(touchX, touchY);
 
-      isCustomTarget = true;
-      resetPosBtn.style.display = 'block';
-      if (navigator.vibrate) navigator.vibrate(30);
+      if (navigator.vibrate) navigator.vibrate(40);
     });
 
-    // 터치한 위치 근처의 3분할 교차점으로 자석처럼 스냅
-    function applyMagneticGoldenRatio(tx, ty) {
+    resetFocusBtn.addEventListener('click', () => {
+      hasTarget = false;
+      subjectAnchor = null;
+      idealFrame = null;
+      resetFocusBtn.style.display = 'none';
+      shutterBtn.classList.remove('perfect-shot');
+      updateHUD('DIRECTOR STANDBY', '👆', '촬영할 피사체를 화면에서 터치하세요', '#3b82f6', 'rgba(15, 23, 42, 0.92)');
+    });
+
+    // 4. 사진학적 황금 구도 목표 위치 결정
+    function calculateIdealComposition(touchX, touchY) {
       const W = overlay.width;
       const H = overlay.height;
 
-      const goldenPoints = [
-        { x: W / 3, y: H / 3 },         // 좌상단 (인물 상반신/얼굴)
-        { x: (W * 2) / 3, y: H / 3 },   // 우상단 (인물 상반신/얼굴)
-        { x: W / 3, y: (H * 2) / 3 },   // 좌하단 (사물/가구)
-        { x: (W * 2) / 3, y: (H * 2) / 3 }, // 우하단 (사물/가구)
-        { x: W / 2, y: H * 0.46 }       // 정중앙
-      ];
+      // 피사체가 화면 좌측에 치우쳐 있으면 좌측 1/3 황금선에 배치하고 우측에 여백 부여
+      // 피사체가 화면 우측에 치우쳐 있으면 우측 1/3 황금선에 배치하고 좌측에 여백 부여
+      // 화면 중앙부(40~60%)라면 정중앙 집중 구도 지정
+      let targetX = W / 2;
+      let targetY = H * 0.45; // 시각적 중심
 
-      let closest = goldenPoints[0];
-      let minDist = Infinity;
-      goldenPoints.forEach(pt => {
-        const d = Math.hypot(pt.x - tx, pt.y - ty);
-        if (d < minDist) {
-          minDist = d;
-          closest = pt;
-        }
-      });
-
-      // 터치 위치가 황금 포인트와 일정 거리 이내면 이상적인 구도로 당겨줌 (부드러운 유도)
-      if (minDist < Math.min(W, H) * 0.22) {
-        destTargetX = closest.x;
-        destTargetY = closest.y;
+      if (touchX < W * 0.42) {
+        targetX = W / 3;        // 좌측 3분할 교차점
+      } else if (touchX > W * 0.58) {
+        targetX = (W * 2) / 3;  // 우측 3분할 교차점
       }
+
+      idealFrame = {
+        x: targetX,
+        y: targetY,
+        radius: Math.min(W, H) * 0.11 // 권장 도킹 반경
+      };
     }
 
-    function showTouchRipple(x, y) {
-      const ripple = document.createElement('div');
-      ripple.className = 'touch-ring';
-      ripple.style.left = `${x}px`;
-      ripple.style.top = `${y}px`;
-      document.getElementById('camera-container').appendChild(ripple);
-      setTimeout(() => ripple.remove(), 500);
-    }
-
-    // 4. 메인 렌더링 루프
-    function render() {
+    // 5. 메인 렌더링 & 촬영자 디렉팅 루프
+    function renderLoop() {
       ctx.clearRect(0, 0, overlay.width, overlay.height);
       const W = overlay.width;
       const H = overlay.height;
 
-      // (1) 3분할 가이드 격자 라인
+      // 미세 3분할 격자
       drawGrid(W, H);
 
-      // (2) 타깃 링 위치 선형 보간 (부드러운 이동 애니메이션)
-      currentTargetX += (destTargetX - currentTargetX) * 0.22;
-      currentTargetY += (destTargetY - currentTargetY) * 0.22;
+      // 미니 수평 가이드
+      drawMiniLevel(W, H);
 
-      // (3) 센서 값 감속 보간
-      smoothRoll += (tiltRoll - smoothRoll) * 0.15;
-      smoothPitch += (tiltPitch - smoothPitch) * 0.15;
+      if (!hasTarget || !subjectAnchor) {
+        // 대기 상태
+        shutterBtn.classList.remove('perfect-shot');
+      } else {
+        // 촬영자에게 구체적인 움직임 코칭 실행
+        directPhotographer(W, H);
+      }
 
-      const targetRadius = Math.min(W, H) * 0.082;
+      requestAnimationFrame(renderLoop);
+    }
 
-      // 지정된 타깃 링을 중심으로 반응하는 밸런스 볼 좌표
-      const offsetScale = Math.min(W, H) * 0.015;
-      const ballX = currentTargetX + Math.max(-W * 0.35, Math.min(W * 0.35, smoothRoll * offsetScale));
-      const ballY = currentTargetY + Math.max(-H * 0.3, Math.min(H * 0.3, smoothPitch * offsetScale));
+    // 6. 촬영자 행동 유도 코칭 엔진
+    function directPhotographer(W, H) {
+      const dx = idealFrame.x - subjectAnchor.x;
+      const dy = idealFrame.y - subjectAnchor.y;
+      const distance = Math.hypot(dx, dy);
 
-      // 도킹 여부 판별
-      const dist = Math.hypot(currentTargetX - ballX, currentTargetY - ballY);
-      const isLevel = Math.abs(smoothRoll) < 3.5;
-      isAligned = (dist < targetRadius * 0.65) && isLevel;
+      const isPositionMatched = distance <= idealFrame.radius * 0.7;
+      const isCompletelyReady = isPositionMatched && isLevel;
 
-      // (4) 타깃 링 렌더링
+      // (1) 작가의 황금 타깃 프레임 렌더링
       ctx.save();
       ctx.beginPath();
-      ctx.arc(currentTargetX, currentTargetY, targetRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = isAligned ? '#22c55e' : 'rgba(255, 255, 255, 0.7)';
-      ctx.lineWidth = isAligned ? 4.5 : 2;
-      if (!isAligned) ctx.setLineDash([6, 6]);
+      ctx.arc(idealFrame.x, idealFrame.y, idealFrame.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = isCompletelyReady ? '#22c55e' : 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = isCompletelyReady ? 4 : 2;
+      if (!isCompletelyReady) ctx.setLineDash([8, 6]);
       ctx.stroke();
 
-      if (isAligned) {
+      if (isCompletelyReady) {
         ctx.fillStyle = 'rgba(34, 197, 94, 0.25)';
         ctx.fill();
       }
       ctx.restore();
 
-      // (5) 밸런스 볼 렌더링
+      // (2) 피사체 핀 렌더링
       ctx.save();
       ctx.beginPath();
-      ctx.arc(ballX, ballY, 12, 0, Math.PI * 2);
-      ctx.fillStyle = isAligned ? '#22c55e' : '#ffd700';
+      ctx.arc(subjectAnchor.x, subjectAnchor.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = isCompletelyReady ? '#22c55e' : '#ffd700';
       ctx.shadowColor = '#000';
       ctx.shadowBlur = 8;
       ctx.fill();
 
-      // 타깃과 볼 간 유도선
-      if (!isAligned) {
-        ctx.beginPath();
-        ctx.moveTo(currentTargetX, currentTargetY);
-        ctx.lineTo(ballX, ballY);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+      // (3) 이동 안내 다이나믹 화살표 렌더링
+      if (!isPositionMatched) {
+        drawGuideArrow(subjectAnchor, idealFrame);
       }
       ctx.restore();
 
-      // (6) HUD 상태 피드백
-      if (isAligned) {
-        if (!wasAligned) {
-          if (navigator.vibrate) navigator.vibrate(40);
-          wasAligned = true;
-        }
-        updateHUD('✨', '베스트 앵글! 지금 셔터를 누르세요', '#22c55e');
-        shutterBtn.classList.add('ready');
-      } else {
-        wasAligned = false;
-        shutterBtn.classList.remove('ready');
+      // (4) 촬영자에게 직접적인 행동 명령 하달
+      if (isCompletelyReady) {
+        // [완벽]
+        updateHUD('PERFECT ANGLE', '✨', '구도가 완벽합니다!\n지금 셔터를 누르세요!', '#22c55e', 'rgba(22, 101, 52, 0.95)');
+        shutterBtn.classList.add('perfect-shot');
+      } 
+      else if (isPositionMatched && !isLevel) {
+        // [위치는 맞았으나 수평이 기운 상태]
+        updateHUD('STEP 2: 수평 맞추기', '📐', '스마트폰을 똑바로 세워\n수평을 맞춰주세요', '#f59e0b', 'rgba(120, 53, 15, 0.92)');
+        shutterBtn.classList.remove('perfect-shot');
+      } 
+      else {
+        // [촬영자가 카메라를 움직여 프레임을 재배치해야 하는 상태]
+        shutterBtn.classList.remove('perfect-shot');
+        generatePhotographerMovementDirective(dx, dy);
+      }
+    }
 
-        if (Math.abs(smoothRoll) >= 4.0 && dist < targetRadius * 1.5) {
-          updateHUD('📐', '수평을 살짝만 맞춰주세요', '#f59e0b');
-        } else {
-          updateHUD('🎯', '노란 점을 원 안으로 넣으세요', 'rgba(15, 23, 42, 0.88)');
-        }
+    // 촬영자에게 명확한 방향 지시 생성 ("카메라를 오른쪽으로 돌리세요" 등)
+    function generatePhotographerMovementDirective(dx, dy) {
+      let horizontalDirective = '';
+      let verticalDirective = '';
+      let arrow = '';
+
+      // dx > 0 : 피사체가 타깃보다 왼쪽에 있음 -> 카메라를 왼쪽으로 돌려야 피사체가 오른쪽(타깃)으로 옴
+      // dx < 0 : 피사체가 타깃보다 오른쪽에 있음 -> 카메라를 오른쪽으로 돌려야 피사체가 왼쪽(타깃)으로 옴
+      if (Math.abs(dx) > 35) {
+        horizontalDirective = dx > 0 ? '카메라를 왼쪽으로 회전' : '카메라를 오른쪽으로 회전';
+      }
+      if (Math.abs(dy) > 35) {
+        verticalDirective = dy > 0 ? '카메라를 위로 올림' : '카메라를 아래로 숙임';
       }
 
-      requestAnimationFrame(render);
+      if (horizontalDirective && verticalDirective) {
+        arrow = (dx > 0 && dy > 0) ? '↖' : (dx > 0 && dy < 0) ? '↙' : (dx < 0 && dy > 0) ? '↗' : '↘';
+        updateHUD('STEP 1: 앵글 이동', arrow, `${horizontalDirective}하며\n${verticalDirective}하여 피사체를 원에 맞추세요`, '#38bdf8', 'rgba(15, 23, 42, 0.92)');
+      } else if (horizontalDirective) {
+        arrow = dx > 0 ? '⬅' : '➔';
+        updateHUD('STEP 1: 패닝 이동', arrow, `${horizontalDirective}하여\n피사체를 황금선 위치로 옮기세요`, '#38bdf8', 'rgba(15, 23, 42, 0.92)');
+      } else if (verticalDirective) {
+        arrow = dy > 0 ? '⬆' : '⬇';
+        updateHUD('STEP 1: 틸트 조절', arrow, `${verticalDirective}하여\n화면 여백을 안정적으로 맞추세요`, '#38bdf8', 'rgba(15, 23, 42, 0.92)');
+      } else {
+        updateHUD('STEP 1: 미세 조정', '🎯', '조금만 더 원 중심 쪽으로\n카메라 각도를 미세 조정하세요', '#38bdf8', 'rgba(15, 23, 42, 0.92)');
+      }
+    }
+
+    function drawGuideArrow(from, to) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      const len = 15;
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y);
+      ctx.lineTo(to.x - len * Math.cos(angle - Math.PI / 6), to.y - len * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to.x - len * Math.cos(angle + Math.PI / 6), to.y - len * Math.sin(angle + Math.PI / 6));
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawMiniLevel(W, H) {
+      const cy = H * 0.88; // 화면 하단 수평계
+      const len = 40;
+      const rad = (smoothTilt * Math.PI) / 180;
+
+      ctx.save();
+      ctx.translate(W / 2, cy);
+      ctx.rotate(-rad);
+      ctx.beginPath();
+      ctx.moveTo(-len, 0); ctx.lineTo(len, 0);
+      ctx.strokeStyle = isLevel ? '#22c55e' : 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = isLevel ? 3 : 1.5;
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawGrid(W, H) {
@@ -504,13 +543,15 @@
       ctx.restore();
     }
 
-    function updateHUD(icon, text, bg) {
-      hudIcon.innerText = icon;
-      hudText.innerText = text;
-      hudBar.style.background = bg;
+    function updateHUD(badge, icon, text, badgeBg, hudBg) {
+      hudStepBadge.innerText = badge;
+      if (badgeBg) hudStepBadge.style.background = badgeBg;
+      hudCommandIcon.innerText = icon;
+      hudCommandText.innerText = text;
+      if (hudBg) directorHud.style.background = hudBg;
     }
 
-    // 5. 촬영 및 저장
+    // 7. 촬영 및 저장
     function capturePhoto() {
       flashOverlay.classList.remove('flash-anim');
       void flashOverlay.offsetWidth;
@@ -522,7 +563,7 @@
       captureCanvas.height = video.videoHeight;
       const cCtx = captureCanvas.getContext('2d');
 
-      // AI 카메라 색감 보정 (대비 +8%, 채도 +12%)
+      // AI 카메라 색감 보정
       cCtx.filter = 'contrast(1.08) saturate(1.12)';
       cCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
@@ -547,7 +588,7 @@
 
     btnSave.addEventListener('click', () => {
       if (!capturedBlob) return;
-      const fileName = `best_shot_${Date.now()}.jpg`;
+      const fileName = `director_shot_${Date.now()}.jpg`;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(capturedBlob);
       a.download = fileName;
@@ -559,7 +600,7 @@
 
     setupCamera().then(() => {
       initSensors();
-      render();
+      renderLoop();
     });
   </script>
 </body>
